@@ -37,6 +37,17 @@ services:
     networks:
       - app_network
 
+  frontend:
+    build:
+      context: ./frontend/
+      dockerfile: ./Dockerfile
+    image: magnusdtd/naver-hackathon-frontend
+    ports:
+      - "8070:8070"
+    networks:
+      - app_network
+
+
 volumes:
   postgres_data:
   minio_data:
