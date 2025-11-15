@@ -13,6 +13,8 @@ export default defineConfig({
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
+      routeFileIgnorePrefix: '-',
+      routeFilePrefix: '~',
     }),
     viteReact(),
     tailwindcss(),
@@ -23,9 +25,9 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist', 
-    assetsDir: 'assets', 
-    emptyOutDir: true, 
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
   },
-  base: './', 
+  base: './',
 })
