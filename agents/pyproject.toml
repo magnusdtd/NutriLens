@@ -1,9 +1,19 @@
 [project]
-name = "Multi-agent system"
+name = "Multi-agent-system"
 version = "0.1.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "langchain>=1.0.5",
+    "langchain-naver>=0.1.1",
+    "langchain-naver-community>=0.2.0",
+    "langgraph>=1.0.2",
+    "minio>=7.2.18",
+    "mlflow>=3.6.0",
+    "onnx>=1.19.1",
+    "open3d>=0.19.0",
+    "opencv-python-headless>=4.12.0.88",
+    "openfoodfacts>=3.1.0",
+    "torchvision>=0.24.1",
 ]
