@@ -5,6 +5,11 @@ import time
 from .yolov8 import YOLOv8Seg
 from .depth_estimator import DepthEstimator
 from .point_cloud_generator import PointCloudGenerator
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from utils.mlflow_client import MLFlow
+import os
 
 class VolumePredictor:
     def __init__(
@@ -17,6 +22,10 @@ class VolumePredictor:
         conf = 0.25,
         iou = 0.7
     ):
+        self.mlflow_client = MLFlow()
+        self.mlflow_client.load_onnx_model(yolo_path, os.environ.get("YOLO_MLFLOW_URI"))
+        self.mlflow_client.load_torch_model(dav2_path, os.environ.get("DAMv2_MLFLOW_URI"))
+
         self.depth_estimator = DepthEstimator(dav2_path, model_type=dav2_type)
         self.pc_generator = PointCloudGenerator(focal_length_x, focal_length_y)
         self.yolo = YOLOv8Seg(yolo_path, conf_thres=conf, iou_thres=iou)

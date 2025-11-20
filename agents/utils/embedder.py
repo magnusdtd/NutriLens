@@ -1,42 +1,31 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 import numpy as np
 from typing import List
 from transformers import AutoTokenizer
-from huggingface_hub import hf_hub_download
-import onnx
 import onnxruntime as ort
-import mlflow
-import time
+from mlflow_client import MLFlow
 import os
-
 
 class Embedder:
     """
     Embeds text using ONNX runtime with intfloat/multilingual-e5-small.
     Loads ONNX model and tokenizer once in __init__.
     """
-    def __init__(self):
-        mlflow.set_tracking_uri("http://localhost:5002")
-
-        self.model_name = "intfloat/multilingual-e5-small"
-        self.onnx_path = "models/onnx/model.onnx"
+    def __init__(
+        self,
+        model_name: str = "intfloat/multilingual-e5-small",
+        local_model_path: str = "../checkpoints/onnx/model.onnx"
+    ):
+        self.model_name = model_name
+        self.local_model_path = local_model_path
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.session = None
-        self.model_uri = "models:/intfloat_multilingual-e5-small_onnx_model/1"
+        self.mlflow_model_uri = os.environ.get("EMBEDDER_MLFLOW_URI") # "models:/intfloat_multilingual-e5-small_onnx_model/1"
 
-        # Check if model already exists locally, only download if necessary
-        if not os.path.isfile(self.onnx_path):
-            # Try to load the model from MLflow, fall back to local model if it fails
-            try:
-                onnx_proto = mlflow.onnx.load_model(self.model_uri) # onnx.onnx_ml_pb2.ModelProto
-                onnx.save(onnx_proto, self.onnx_path)
-                print("Loaded ONNX model from MLflow and saved to disk.")
-            except Exception as e:
-                print(f"Falling back to local ONNX model: {e}")
-                hf_hub_download(repo_id=self.model_name, filename="onnx/model.onnx", local_dir="models/")
-        else:
-            print(f"ONNX model already exists at {self.onnx_path}. Skipping download.")
-
-        self.session = ort.InferenceSession(self.onnx_path)
+        self.mlflow_client = MLFlow()
+        self.mlflow_client.load_onnx_model(self.local_model_path, self.mlflow_model_uri)
+        self.session = ort.InferenceSession(self.local_model_path)
     
     @staticmethod
     def mean_pooling(last_hidden_state, attention_mask) -> np.ndarray:

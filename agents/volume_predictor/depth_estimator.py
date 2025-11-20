@@ -31,8 +31,17 @@ class DepthEstimator:
                 raise FileNotFoundError(f'Model file not found: {self.model_path}')
             
             print(f'Loading Depth Anything V2 model from {self.model_path}, type={self.model_type}')
-            self.model = DepthAnythingV2(**{**self.model_configs[self.model_type], 'max_depth': self.max_depth})
-            self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
+
+            try:
+                # Try to load weights only
+                self.model = DepthAnythingV2(**{**self.model_configs[self.model_type], 'max_depth': self.max_depth})
+                state_dict = torch.load(self.model_path, map_location='cpu', weights_only=True)
+                self.model.load_state_dict(state_dict)
+            except Exception as weight_load_exc:
+                print(f"Failed to load weights only, trying to load full model... ({weight_load_exc})")
+                # Fallback: load entire model
+                self.model = torch.load(self.model_path, map_location='cpu', weights_only=False)
+
             self.model.eval()
             print(f'Depth Anything model loaded successfully')
             
