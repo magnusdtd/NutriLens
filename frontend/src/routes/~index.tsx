@@ -174,12 +174,12 @@ function Home() {
 
   if (!image)
     return (
-      <div className="p-6 flex flex-col gap-6 pt-8">
+      <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6 pt-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-charcoal font-bold text-2xl">
+          <h1 className="text-charcoal font-bold text-2xl lg:text-xl">
             Analyze your Meals
           </h1>
-          <p className="text-gray-600 font-light text-sm">
+          <p className="text-gray-600 font-light text-sm lg:text-xs">
             Take a photo your meal and get instant nutrition insights poweed by
             Al
           </p>
@@ -187,22 +187,22 @@ function Home() {
         <UploadImage onImageSelected={setImage} />
         <div className="w-full flex flex-row gap-4 items-center">
           <div className="h-px bg-gray-600 flex-1" />
-          <p className="text-sm text-gray-600 uppercase">tips & tricks</p>
+          <p className="text-sm lg:text-xs text-gray-600 uppercase">tips & tricks</p>
           <div className="h-px bg-gray-600 flex-1" />
         </div>
         <TipsAndTricks />
-        <div className="w-full p-4 bg-white rounded-lg flex flex-row gap-4 items-center justify-center border border-gray-300">
-          <button className="bg-primary p-2 px-6 rounded-sm text-white font-medium text-base">
+        {/* <div className="w-full p-4 lg:p-2 bg-white rounded-lg flex flex-row gap-4 items-center justify-center border border-gray-300">
+          <button className="bg-primary p-2 px-6 lg:px-4 rounded-sm text-white font-medium text-sm lg:text-xs">
             Login
           </button>
-          <p className="text-charcoal text-sm">to get premium features</p>
-        </div>
+          <p className="text-charcoal text-sm lg:text-xs">to get premium features</p>
+        </div> */}
       </div>
     )
 
   if (image && !result)
     return (
-      <div className="p-6 flex flex-col gap-6">
+      <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6">
         <div className="w-full h-40 rounded-md border border-gray-300 bg-gray-200">
           {imageUrl && (
             <img
@@ -213,11 +213,11 @@ function Home() {
           )}
         </div>
         <div>
-          <div>
-            <h2 className="text-charcoal font-semibold text-lg">
+          <div className='mb-4'>
+            <h2 className="text-charcoal font-semibold text-lg lg:text-base">
               Analyzing you meal
             </h2>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 text-sm lg:text-xs">
               Utilizing NutriLens AI to break down your meal's nutrirtions
             </p>
           </div>
@@ -236,8 +236,8 @@ function Home() {
     )
 
   return (
-    <div className="p-6 flex flex-col gap-6">
-      <div className="w-full h-40 rounded-md border border-gray-300 bg-gray-200">
+    <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6 lg:gap-4">
+      <div className="w-full h-40 lg:h-32 rounded-md border border-gray-300 bg-gray-200">
         {imageUrl && (
           <img
             src={imageUrl}
@@ -247,10 +247,12 @@ function Home() {
         )}
       </div>
       <div>
-        <h1 className="text-xl font-bold ">Predictions</h1>
-        <p className="text-sm font-light text-gray-600">
+        <h1 className="text-xl lg:text-lg font-bold ">Predictions</h1>
+        <p className="text-sm lg:text-xs font-light text-gray-600">
           {result &&
-            result.predictions.map((pred, id) => <span key={id}>{pred}, </span>)}
+            result.predictions.map((pred, id) => (
+              <span key={id}>{pred}, </span>
+            ))}
         </p>
       </div>
       <div>
@@ -263,15 +265,17 @@ function Home() {
                   className="flex flex-col justify-center items-center rounded-md p-4"
                   style={{ background: `${data.bg}` }}
                 >
-                  <h3 className="text-gray-600 text-sm mb-1">{data.name}</h3>
+                  <h3 className="text-gray-600 text-sm lg:text-xs mb-1">
+                    {data.name}
+                  </h3>
                   <p
-                    className="font-bold text-xl"
+                    className="font-bold text-xl lg:text-base"
                     style={{ color: `${data.text}` }}
                   >
                     {result ? result.nutritionalInfo[data.name] : data.value}
                   </p>
                   <p
-                    className="font-light text-sm"
+                    className="font-light text-sm lg:text-xs"
                     style={{ color: `${data.text}` }}
                   >
                     {data.unit}
@@ -299,8 +303,8 @@ function Home() {
         </div>
         <div className="mt-4 flex flex-col gap-2">
           <div className="w-full flex flex-row items-center justify-center gap-4 text-white bg-primary p-2 rounded-md">
-            <BotMessageSquare />
-            <p className="text-sm font-medium">Ask AI for advices</p>
+            <BotMessageSquare className="size-6 lg:size-5" />
+            <p className="text-sm lg:text-xs font-medium">Ask AI for advices</p>
           </div>
           <div
             className="w-full flex flex-row items-center justify-center gap-4 text-charcoal bg-yellow-green p-2 rounded-md"
@@ -309,8 +313,10 @@ function Home() {
               setImage(null)
             }}
           >
-            <Salad />
-            <p className="text-sm font-medium">Analyze another meal</p>
+            <Salad className="size-6 lg:size-5" />
+            <p className="text-sm lg:text-xs font-medium">
+              Analyze another meal
+            </p>
           </div>
         </div>
       </div>
@@ -339,13 +345,13 @@ function TipsAndTricks() {
   return (
     <div className="bg-white p-6 rounded-lg flex flex-col gap-6 justify-center items-center border border-gray-300">
       <div className="flex flex-col gap-1 ">
-        <h2 className="text-charcoal text-lg font-bold">{title}</h2>
-        <p className="text-gray-600 text-sm ">{content}</p>
+        <h2 className="text-charcoal text-lg lg:text-base font-bold">{title}</h2>
+        <p className="text-gray-600 text-sm lg:text-xs">{content}</p>
       </div>
       <div className="flex flex-row gap-2">
         {TipList.map((_tip, id) => (
           <div
-            className={`h-2 rounded-full ${id === idx ? `w-4 bg-primary` : `w-2 bg-gray-200`} transition-[width] duration-200 ease-in-out`}
+            className={`h-2  rounded-full ${id === idx ? `w-4 bg-primary` : `w-2  bg-gray-200`} transition-[width] duration-200 ease-in-out`}
             onClick={() => setIdx(id)}
           ></div>
         ))}
@@ -364,7 +370,7 @@ interface AnalyzeCardProps {
 function AnalyzeCard({isProcessed, isCompleted, id, category}: AnalyzeCardProps) {
   return (
     <div
-      className={`${isProcessed ? (isCompleted ? `bg-yellow-green` : `bg-yellow-green border border-primary`) : `bg-gray-200`} flex flex-row items-center gap-6 px-4 py-2 text-sm rounded-md`}
+      className={`${isProcessed ? (isCompleted ? `bg-yellow-green` : `bg-yellow-green border border-primary`) : `bg-gray-200`} flex flex-row items-center gap-6 px-4 py-2 text-sm lg:text-sm rounded-md`}
     >
       <div
         className={`flex items-center justify-center size-6 rounded-full  ${isProcessed ? (isCompleted ? `bg-primary` : `bg-yellow-green-dark text-primary`) : `bg-gray-300 text-gray-600`}`}
@@ -379,7 +385,7 @@ function AnalyzeCard({isProcessed, isCompleted, id, category}: AnalyzeCardProps)
           <p>{id}</p>
         )}
       </div>
-      <div className={`${isProcessed ? `text-black` : `text-gray-600`}`}>
+      <div className={`text-sm lg:text-xs ${isProcessed ? `text-black` : `text-gray-600`}`}>
         {category}
       </div>
     </div>

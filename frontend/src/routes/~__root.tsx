@@ -8,7 +8,7 @@ export const Route = createRootRoute({
   component: () => (
     <>
       <Header />
-      <div className="pt-18 h-full">
+      <div className="pt-18 h-screen w-screen flex items-center justify-center">
         <Outlet />
       </div>
       {/* <TanStackDevtools

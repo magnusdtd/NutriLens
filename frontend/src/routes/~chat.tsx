@@ -100,7 +100,7 @@ function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4.5rem)] bg-[#FBFDF5]">
+    <div className="flex flex-col h-full w-full lg:w-1/3 bg-[#FBFDF5]">
       <main className="flex-1 px-6 pt-6 pb-24">
         {!hasStarted ? (
           <StarterState onSuggestionClick={handleSuggestionClick} />
@@ -124,14 +124,14 @@ function StarterState({
   onSuggestionClick: (label: string) => void
 }) {
   return (
-    <div className="flex h-full flex-col items-center text-center">
-      <div className="mt-16 mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-green text-primary">
-        <MessageCircle className="h-8 w-8" />
+    <div className="flex h-full w-full flex-col items-center text-center">
+      <div className="mt-16 lg:mt-6 mb-8 lg:mb-6 flex size-16 lg:size-12 items-center justify-center rounded-full bg-yellow-green text-primary">
+        <MessageCircle className="size-8 lg:size-6" />
       </div>
-      <h1 className="text-2xl font-semibold text-charcoal mb-2">
+      <h1 className="text-2xl lg:text-xl font-semibold text-charcoal mb-2">
         Chat with NutriLens AI
       </h1>
-      <p className="mb-8 text-sm text-gray-600 max-w-xs">
+      <p className="mb-8 text-sm lg:text-xs text-gray-600 max-w-xs">
         Ask any questions about your meal and get personalized nutrition advice.
       </p>
 
@@ -144,9 +144,9 @@ function StarterState({
           >
             <span className="flex items-center gap-3">
               <span className="text-charcoal group-hover:text-primary">
-                <DynamicIcon name={item.name} />
+                <DynamicIcon name={item.name} className="size-6 lg:size-5" />
               </span>
-              <span>{item.label}</span>
+              <span className="text-sm lg:text-xs">{item.label}</span>
             </span>
           </button>
         ))}
@@ -157,7 +157,7 @@ function StarterState({
 
 function ActiveChatState({ messages }: { messages: Message[] }) {
   return (
-    <div className="flex h-full flex-col gap-4 text-sm text-charcoal">
+    <div className="flex h-full w-full flex-col gap-4 text-sm text-charcoal">
       {messages.map((message) => {
         const isBot = message.sender === 'bot'
         return (
@@ -166,7 +166,7 @@ function ActiveChatState({ messages }: { messages: Message[] }) {
             className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-xs ${
                 isBot
                   ? message.emphasized
                     ? 'bg-white border border-gray-300'
@@ -201,27 +201,27 @@ function ChatInputBar({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#FBFDF5] px-4 pb-6 pt-3">
-      <div className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-white px-4 py-2 shadow-md border border-gray-200">
+      <div className="mx-auto flex max-w-sm items-center gap-3 rounded-full bg-white px-4 py-2 shadow-md border border-gray-200">
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask about your meal..."
-          className="flex-1 border-none bg-transparent text-sm text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
+          className="flex-1 border-none bg-transparent text-sm lg:text-xs text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
         />
         <button
           type="button"
-          className="flex size-9 items-center justify-center rounded-full bg-secondary text-charcoal"
+          className="flex size-9 lg:size-7 items-center justify-center rounded-full bg-secondary text-charcoal"
         >
-          <img className='size-6' src={image} alt="" />
+          <img className="size-6 lg:size-5" src={image} alt="" />
           <span className="sr-only">Attach image</span>
         </button>
         <button
           type="button"
           onClick={onSend}
-          className="flex size-9 items-center justify-center rounded-full bg-primary text-white"
+          className="flex size-9 lg:size-7  items-center justify-center rounded-full bg-primary text-white"
         >
-          <Send className="size-4" />
+          <Send className="size-4 lg:size-3" />
           <span className="sr-only">Send message</span>
         </button>
       </div>
