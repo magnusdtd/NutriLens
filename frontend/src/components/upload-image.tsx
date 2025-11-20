@@ -1,8 +1,12 @@
 import { Upload } from 'lucide-react'
 import { type ChangeEvent, useRef } from 'react'
 
+interface ImageRequest {
+  image: File | Blob
+}
+
 type UploadImageProps = {
-  onImageSelected: (file: File) => void
+  onImageSelected: (file: ImageRequest) => void
 }
 
 export default function UploadImage({ onImageSelected }: UploadImageProps) {
@@ -15,7 +19,7 @@ export default function UploadImage({ onImageSelected }: UploadImageProps) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    onImageSelected(file)
+    onImageSelected({ image: file })
   }
 
   return (

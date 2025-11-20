@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 
 import { useState } from 'react'
-import { Home, Menu, X } from 'lucide-react'
+import { Home, Menu, MessageCircle, X } from 'lucide-react'
 import logo from '/icons/logo.svg';
 
 export default function Header() {
@@ -9,8 +9,8 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full py-4 px-6 flex items-center justify-between bg-white text-charcoal shadow-lg">
-        <div className='flex flex-row gap-6'>
+      <header className="fixed w-full py-4 px-6 flex items-center justify-between bg-white/70 backdrop-blur-md text-charcoal shadow-lg">
+        <div className="flex flex-row gap-6">
           <img src={logo} alt="" />
           <h1 className="text-xl font-bold">NutriLens</h1>
         </div>
@@ -50,6 +50,14 @@ export default function Header() {
           </Link>
 
           {/* Demo Links Start */}
+          <Link
+            to="/chat"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-lg bg-secondary hover:bg-gray-200 transition-colors mb-2"
+          >
+            <MessageCircle size={20} />
+            <span className="font-medium">Chat</span>
+          </Link>
 
           {/* Demo Links End */}
         </nav>
