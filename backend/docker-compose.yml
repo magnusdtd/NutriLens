@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: nutrilens_postgres
+    environment:
+      POSTGRES_USER: nutrilens
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: nutrilens_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - nutrilens_network
+
+volumes:
+  postgres_data:
+
+networks:
+  nutrilens_network:
+    driver: bridge
