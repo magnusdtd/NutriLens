@@ -56,7 +56,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       CLOVA_OCR_SECRET: ${CLOVA_OCR_SECRET}
-      
+      DATABASE_URL: ${DATABASE_URL}
 
 volumes:
   postgres_data:
