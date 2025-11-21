@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import ORJSONResponse
 from langchain_naver import ChatClovaX
 from langfuse import get_client
@@ -8,6 +8,10 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 from agents.supervisor import SupervisorAgent
+from sqlmodel import Session, select
+from utils.postgresql import engine, Image
+from fastapi.responses import StreamingResponse
+
 
 langfuse = get_client()
 
@@ -36,17 +40,40 @@ app = FastAPI(
     swagger_ui_parameters={"syntaxHighlight.theme": "monokai"},
 )
 
-class ImgRequest(BaseModel):
-    user_id: Optional[str] = None
-    image: Optional[str] = None 
 
-@app.post("/api/chat")
-async def chat_completion(payload: ImgRequest):
-    return {}
+
+@app.post("/api/predict_img")
+async def predict_img(
+    user_id: str,
+    image_id: str,
+):
+    from utils.minio_client import minio_client
+
+    # 1. Retrieve image metadata from Postgres
+    with Session(engine) as session:
+        try:
+            stmt = select(Image).where(Image.id == image_id)
+            image_obj = session.exec(stmt).first()
+            if not image_obj:
+                raise HTTPException(status_code=404, detail=f"Image not found for the provided image_id: {image_id}")
+        except Exception as db_err:
+            raise HTTPException(status_code=500, detail=f"Database error while retrieving image: {str(db_err)}")
+
+    # 2. Retrieve image file from MinIO
+    try:
+        image_stream = minio_client.get_image(
+            file_name=image_obj.file_name,
+            bucket_name=image_obj.bucket
+        )
+    except Exception as minio_err:
+        raise HTTPException(status_code=500, detail=f"Error retrieving image from MinIO: {str(minio_err)}")
+
+    return StreamingResponse(image_stream, media_type="image/jpeg")
+
 
 class ChatRequest(BaseModel):
     message: str
-    user_id: Optional[str] = None
+    user_id: str
     image: Optional[str] = None
 
 
