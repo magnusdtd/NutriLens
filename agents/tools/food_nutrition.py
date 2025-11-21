@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 from langchain.tools import tool
 
-from ..utils.ingest_data import get_or_create_collection
-from ..utils.embedder import Embedder
+from utils.ingest_data import get_or_create_collection
+from utils.embedder import Embedder
 
 @dataclass
 class SearchResult:

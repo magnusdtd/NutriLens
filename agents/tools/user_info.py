@@ -45,7 +45,7 @@ SQLModel.metadata.create_all(engine)
         "or an error message."
     ),
 )
-def get_user_by_id(user_id: str) -> dict:
+def get_user_info_by_user_id(user_id: str) -> dict:
     """
     Get a user from the PostgreSQL database by their UUID.
 

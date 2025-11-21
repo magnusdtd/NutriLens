@@ -13,7 +13,7 @@ from sqlmodel import Session, select
         "Fetch the image from the database and MinIO storage, run the prediction model, and return the predicted volume/result as JSON."
     ),
 )
-def predict_volume(image_id: str) -> dict:
+def predict_volume_tool(image_id: str) -> dict:
     """
     Given an image_id (UUID), fetch image metadata from PostgreSQL, retrieve the image from MinIO,
     predict its food volume using checkpoints, and return the prediction result as JSON.

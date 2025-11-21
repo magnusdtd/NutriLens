@@ -5,7 +5,7 @@ import numpy as np
 from typing import List
 from transformers import AutoTokenizer
 import onnxruntime as ort
-from mlflow_client import MLFlow
+from .mlflow_client import MLFlow
 import os
 
 class Embedder:
