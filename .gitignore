@@ -16,3 +16,7 @@ testing.py
 chroma_db/
 checkpoints*/
 mlruns/
+secrets/
+.terraform
+.terraform.*
+terraform.*
