@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import logo from '/icons/logo.svg'
 import { useState } from 'react'
+import login from '@/services/login.service'
+import { useAuthStore } from '@/stores/auth.store'
+import getProfile from '@/services/profile.service'
 
 export const Route = createFileRoute('/login')({
   component: RouteComponent,
@@ -9,14 +12,33 @@ export const Route = createFileRoute('/login')({
 function RouteComponent() {
   const [email, setEmail] = useState<string>()
   const [password, setPassword] = useState<string>()
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated)
+  const setUser = useAuthStore((state) => state.setUser)
+  const setToken = useAuthStore((state) => state.setToken)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    console.log(email)
-    console.log(password)
+    try {
+      const response = await login({
+        email: email || '',
+        password: password || '',
+      })
+      if (response) {
+        const token = response.token
+        setToken(token || null)
+        const userProfile = token ? await getProfile(token) : null
+        console.log(userProfile)
+        if (userProfile) {
+          setUser(userProfile)
+          setIsAuthenticated(true)
+        }
+      }
+    } catch (error) {
+      console.error('Login failed', error)
+    }
   }
   return (
-    <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6">
+    <div className="h-full w-full max-w-sm p-6 flex flex-col gap-6">
       <div className="flex flex-col items-center justify-center">
         <img className="size-10 lg:size-8" src={logo} alt="" />
         <h1 className="text-2xl lg:text-xl font-medium">NutriLens</h1>

@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react'
 import LoaderCircleRotate from '@/components/loader-circle-rotate'
 import tick from '/icons/tick.svg'
 import { BotMessageSquare, Salad } from 'lucide-react'
-import imageAnalyze from '@/services/image-analyze'
+import imageAnalyze from '@/services/image-analyze.service'
 
 export const Route = createFileRoute('/')({
   component: Home,
 })
 
 type Tip = {
-  title: string;
-  content: string;
+  title: string
+  content: string
 }
 
 const TipList: Tip[] = [
@@ -37,8 +37,8 @@ const TipList: Tip[] = [
 ]
 
 type AnalyzeCategory = {
-  id: number;
-  category: string;
+  id: number
+  category: string
 }
 
 const AnalyzeCategories: AnalyzeCategory[] = [
@@ -52,7 +52,7 @@ type NutritionItem = {
   name: keyof Nutrition
   value: number
   unit: string
-  primary: boolean;
+  primary: boolean
   bg: string
   text: string
 }
@@ -113,11 +113,11 @@ interface ImageRequest {
 }
 
 type Nutrition = {
-    calories: number
-    protein: number
-    carbs: number
-    fat: number
-  }
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+}
 
 interface AnalyzeInfo {
   predictions: string[]
@@ -136,14 +136,16 @@ function Home() {
       return
     }
 
-    let analyzeResponse: AnalyzeInfo;
+    let analyzeResponse: AnalyzeInfo
     const getAnalyzeResult = async () => {
       analyzeResponse = await imageAnalyze(image)
-      if (analyzeResponse) console.log(analyzeResponse);
+      if (analyzeResponse) console.log(analyzeResponse)
     }
-    
-    getAnalyzeResult();
-    setTimeout(() => {!result && setResult(analyzeResponse)}, 10000)
+
+    getAnalyzeResult()
+    setTimeout(() => {
+      !result && setResult(analyzeResponse)
+    }, 10000)
 
     const url = URL.createObjectURL(image.image as File)
     setImageUrl(url)
@@ -174,12 +176,12 @@ function Home() {
 
   if (!image)
     return (
-      <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6 pt-8">
+      <div className="h-full w-full max-w-xl p-6 flex flex-col gap-6 pt-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-charcoal font-bold text-2xl lg:text-xl">
+          <h1 className="text-charcoal font-bold text-2xl lg:text-3xl">
             Analyze your Meals
           </h1>
-          <p className="text-gray-600 font-light text-sm lg:text-xs">
+          <p className="text-gray-600 font-light text-sm lg:text-base">
             Take a photo your meal and get instant nutrition insights poweed by
             Al
           </p>
@@ -187,7 +189,9 @@ function Home() {
         <UploadImage onImageSelected={setImage} />
         <div className="w-full flex flex-row gap-4 items-center">
           <div className="h-px bg-gray-600 flex-1" />
-          <p className="text-sm lg:text-xs text-gray-600 uppercase">tips & tricks</p>
+          <p className="text-sm lg:text-base text-gray-600 uppercase">
+            tips & tricks
+          </p>
           <div className="h-px bg-gray-600 flex-1" />
         </div>
         <TipsAndTricks />
@@ -202,7 +206,7 @@ function Home() {
 
   if (image && !result)
     return (
-      <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6">
+      <div className="h-full w-full max-w-xl p-6 flex flex-col gap-6">
         <div className="w-full h-40 rounded-md border border-gray-300 bg-gray-200">
           {imageUrl && (
             <img
@@ -213,11 +217,11 @@ function Home() {
           )}
         </div>
         <div>
-          <div className='mb-4'>
-            <h2 className="text-charcoal font-semibold text-lg lg:text-base">
+          <div className="mb-4">
+            <h2 className="text-charcoal font-semibold text-lg lg:text-xl">
               Analyzing you meal
             </h2>
-            <p className="text-gray-600 text-sm lg:text-xs">
+            <p className="text-gray-600 text-sm lg:text-base">
               Utilizing NutriLens AI to break down your meal's nutrirtions
             </p>
           </div>
@@ -236,8 +240,8 @@ function Home() {
     )
 
   return (
-    <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6 lg:gap-4">
-      <div className="w-full h-40 lg:h-32 rounded-md border border-gray-300 bg-gray-200">
+    <div className="h-full w-full max-w-xl p-6 flex flex-col gap-6 lg:gap-8">
+      <div className="w-full h-40 p-4 rounded-md border border-gray-300 bg-gray-200">
         {imageUrl && (
           <img
             src={imageUrl}
@@ -247,8 +251,8 @@ function Home() {
         )}
       </div>
       <div>
-        <h1 className="text-xl lg:text-lg font-bold ">Predictions</h1>
-        <p className="text-sm lg:text-xs font-light text-gray-600">
+        <h1 className="text-xl lg:text-2xl font-bold ">Predictions</h1>
+        <p className="text-sm lg:text-base font-light text-gray-600">
           {result &&
             result.predictions.map((pred, id) => (
               <span key={id}>{pred}, </span>
@@ -265,17 +269,17 @@ function Home() {
                   className="flex flex-col justify-center items-center rounded-md p-4"
                   style={{ background: `${data.bg}` }}
                 >
-                  <h3 className="text-gray-600 text-sm lg:text-xs mb-1">
+                  <h3 className="text-gray-600 text-sm lg:text-base mb-1">
                     {data.name}
                   </h3>
                   <p
-                    className="font-bold text-xl lg:text-base"
+                    className="font-bold text-xl lg:text-2xl"
                     style={{ color: `${data.text}` }}
                   >
                     {result ? result.nutritionalInfo[data.name] : data.value}
                   </p>
                   <p
-                    className="font-light text-sm lg:text-xs"
+                    className="font-light text-sm lg:text-base"
                     style={{ color: `${data.text}` }}
                   >
                     {data.unit}
@@ -289,7 +293,7 @@ function Home() {
                 className="flex flex-col justify-center rounded-md p-4 border border-gray-200"
                 style={{ background: `${data.bg}` }}
               >
-                <h3 className="text-gray-600 text-sm">{data.name}</h3>
+                <h3 className="text-gray-600 text-sm lg:text-base">{data.name}</h3>
                 <p
                   className="font-bold text-xl"
                   style={{ color: `${data.text}` }}
@@ -303,8 +307,8 @@ function Home() {
         </div>
         <div className="mt-4 flex flex-col gap-2">
           <div className="w-full flex flex-row items-center justify-center gap-4 text-white bg-primary p-2 rounded-md">
-            <BotMessageSquare className="size-6 lg:size-5" />
-            <p className="text-sm lg:text-xs font-medium">Ask AI for advices</p>
+            <BotMessageSquare className="size-6" />
+            <p className="text-sm lg:text-base font-medium">Ask AI for advices</p>
           </div>
           <div
             className="w-full flex flex-row items-center justify-center gap-4 text-charcoal bg-yellow-green p-2 rounded-md"
@@ -313,8 +317,8 @@ function Home() {
               setImage(null)
             }}
           >
-            <Salad className="size-6 lg:size-5" />
-            <p className="text-sm lg:text-xs font-medium">
+            <Salad className="size-6" />
+            <p className="text-sm lg:text-base font-medium">
               Analyze another meal
             </p>
           </div>
@@ -325,28 +329,30 @@ function Home() {
 }
 
 function TipsAndTricks() {
-  const [idx, setIdx] = useState<number>(0);
+  const [idx, setIdx] = useState<number>(0)
   const [title, setTitle] = useState<string>(TipList[idx].title)
   const [content, setContent] = useState<string>(TipList[idx].content)
 
   useEffect(() => {
-    setTitle(TipList[idx].title);
-    setContent(TipList[idx].content);
+    setTitle(TipList[idx].title)
+    setContent(TipList[idx].content)
   }, [idx])
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIdx((prevIdx) => (prevIdx + 1) % TipList.length);
-    }, 5000);
+      setIdx((prevIdx) => (prevIdx + 1) % TipList.length)
+    }, 5000)
 
-    return () => clearInterval(timer);
+    return () => clearInterval(timer)
   }, [])
 
   return (
     <div className="bg-white p-6 rounded-lg flex flex-col gap-6 justify-center items-center border border-gray-300">
       <div className="flex flex-col gap-1 ">
-        <h2 className="text-charcoal text-lg lg:text-base font-bold">{title}</h2>
-        <p className="text-gray-600 text-sm lg:text-xs">{content}</p>
+        <h2 className="text-charcoal text-lg lg:text-xl font-bold">
+          {title}
+        </h2>
+        <p className="text-gray-600 text-sm lg:text-base">{content}</p>
       </div>
       <div className="flex flex-row gap-2">
         {TipList.map((_tip, id) => (
@@ -361,13 +367,18 @@ function TipsAndTricks() {
 }
 
 interface AnalyzeCardProps {
-  isProcessed: boolean;
-  isCompleted: boolean;
-  id: number;
-  category: string;
+  isProcessed: boolean
+  isCompleted: boolean
+  id: number
+  category: string
 }
 
-function AnalyzeCard({isProcessed, isCompleted, id, category}: AnalyzeCardProps) {
+function AnalyzeCard({
+  isProcessed,
+  isCompleted,
+  id,
+  category,
+}: AnalyzeCardProps) {
   return (
     <div
       className={`${isProcessed ? (isCompleted ? `bg-yellow-green` : `bg-yellow-green border border-primary`) : `bg-gray-200`} flex flex-row items-center gap-6 px-4 py-2 text-sm lg:text-sm rounded-md`}
@@ -385,10 +396,11 @@ function AnalyzeCard({isProcessed, isCompleted, id, category}: AnalyzeCardProps)
           <p>{id}</p>
         )}
       </div>
-      <div className={`text-sm lg:text-xs ${isProcessed ? `text-black` : `text-gray-600`}`}>
+      <div
+        className={`text-sm lg:text-base ${isProcessed ? `text-black` : `text-gray-600`}`}
+      >
         {category}
       </div>
     </div>
   )
 }
-

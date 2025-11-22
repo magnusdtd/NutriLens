@@ -34,15 +34,15 @@ export default function UploadImage({ onImageSelected }: UploadImageProps) {
       <button
         type="button"
         onClick={handleClick}
-        className="w-full pt-4 min-h-40 lg:min-h-32 flex flex-col items-center justify-center rounded-lg bg-secondary border border-gray-300 border-dashed"
+        className="w-full pt-4 min-h-40 flex flex-col items-center justify-center rounded-lg bg-secondary border border-gray-300 border-dashed"
       >
-        <div className="size-11 lg:size-8 p-3 lg:p-2 rounded-full bg-yellow-green flex items-center justify-center mb-2">
+        <div className="size-11 lg:size-13 p-3 rounded-full bg-yellow-green flex items-center justify-center mb-2">
           <Upload className="text-primary w-full" />
         </div>
-        <h3 className="text-charcoal text-base lg:text-sm font-medium">
+        <h3 className="text-charcoal text-base lg:text-lg font-medium">
           Upload your meal image
         </h3>
-        <p className="text-gray-600 text-sm lg:text-xs">
+        <p className="text-gray-600 text-sm lg:text-base">
           Drag and drop or click to browse
         </p>
       </button>

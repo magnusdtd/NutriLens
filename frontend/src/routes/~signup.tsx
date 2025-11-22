@@ -1,24 +1,41 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import logo from '/icons/logo.svg'
 import { useState } from 'react'
+import signup from '@/services/signup.service'
 
 export const Route = createFileRoute('/signup')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const [username, setUsername] = useState<string>()
-  const [email, setEmail] = useState<string>()  
+  const [email, setEmail] = useState<string>()
   const [password, setPassword] = useState<string>()
   const [confirmPassword, setConfirmPassword] = useState<string>()
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) { 
     e.preventDefault()
-    console.log(email)
-    console.log(password)
+    
+    if (confirmPassword !== password) {
+      console.log('Confirm password does not match!')
+      return
+    }
+
+    try {
+      const response = await signup({
+        username: username || '',
+        email: email || '',
+        password: password || '',
+      })
+      console.log(response)
+      if (response) navigate({to: '/login'})
+    } catch (error) {
+      console.error('Signup failed', error)
+    }
   }
   return (
-    <div className="h-full w-full lg:w-1/3 p-6 flex flex-col gap-6">
+    <div className="h-full w-full max-w-sm p-6 flex flex-col gap-6">
       <div className="flex flex-col items-center justify-center">
         <img className="size-10 lg:size-8" src={logo} alt="" />
         <h1 className="text-2xl lg:text-xl font-medium">NutriLens</h1>

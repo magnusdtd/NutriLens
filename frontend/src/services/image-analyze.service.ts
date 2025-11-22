@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { handleAxiosError } from '../utils/axios-error'
 
 interface ImageRequest {
-  image: File | Blob;
+  image: File | Blob
 }
 
 export default async function imageAnalyze({ image }: ImageRequest) {
@@ -21,6 +22,6 @@ export default async function imageAnalyze({ image }: ImageRequest) {
 
     return response.data
   } catch (error) {
-    console.error(error)
+    handleAxiosError(error)
   }
 }

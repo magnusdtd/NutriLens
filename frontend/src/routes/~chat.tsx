@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Lightbulb, MessageCircle, Send, AlertCircle } from 'lucide-react'
+import { MessageCircle, Send } from 'lucide-react'
 import type { IconName } from 'lucide-react/dynamic'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import image from '/icons/image.svg'
-import chat from '@/services/chat'
+import chat from '@/services/chat.service'
 
 export const Route = createFileRoute('/chat')({
   component: ChatPage,
@@ -18,9 +18,9 @@ type Message = {
 }
 
 interface starterSuggestion {
-  id: number;
-  name: IconName;
-  label: string;
+  id: number
+  name: IconName
+  label: string
 }
 
 const starterSuggestions: starterSuggestion[] = [
@@ -31,12 +31,12 @@ const starterSuggestions: starterSuggestion[] = [
   },
   {
     id: 2,
-    name: "alert-circle",
+    name: 'alert-circle',
     label: 'Is this meal balanced?',
   },
   {
     id: 3,
-    name: "message-circle",
+    name: 'message-circle',
     label: 'What’s a healthier alternative?',
   },
 ]
@@ -54,10 +54,12 @@ function ChatPage() {
     setInput('')
 
     const chatResponse = await chat({
-      message: content
+      message: content,
     })
 
-    const responseMsg = chatResponse ? chatResponse: "An error occur, please try again"
+    const responseMsg = chatResponse
+      ? chatResponse
+      : 'An error occur, please try again'
 
     setMessages((prev) => {
       if (prev.length === 0) {
@@ -72,7 +74,7 @@ function ChatPage() {
           emphasized: true,
           text: responseMsg,
         }
-        
+
         return [userMessage, response]
       }
 
@@ -90,7 +92,7 @@ function ChatPage() {
           sender: 'user',
           text: content,
         },
-        response
+        response,
       ]
     })
   }
@@ -100,7 +102,7 @@ function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full lg:w-1/3 bg-[#FBFDF5]">
+    <div className="flex flex-col h-full w-full max-w-xl bg-[#FBFDF5]">
       <main className="flex-1 px-6 pt-6 pb-24">
         {!hasStarted ? (
           <StarterState onSuggestionClick={handleSuggestionClick} />
@@ -125,13 +127,13 @@ function StarterState({
 }) {
   return (
     <div className="flex h-full w-full flex-col items-center text-center">
-      <div className="mt-16 lg:mt-6 mb-8 lg:mb-6 flex size-16 lg:size-12 items-center justify-center rounded-full bg-yellow-green text-primary">
-        <MessageCircle className="size-8 lg:size-6" />
+      <div className="mt-16 lg:mt-20 mb-8 lg:mb-10 flex size-16 lg:size-20 items-center justify-center rounded-full bg-yellow-green text-primary">
+        <MessageCircle className="size-8 lg:size-10" />
       </div>
-      <h1 className="text-2xl lg:text-xl font-semibold text-charcoal mb-2">
+      <h1 className="text-2xl lg:text-3xl font-semibold text-charcoal mb-2">
         Chat with NutriLens AI
       </h1>
-      <p className="mb-8 text-sm lg:text-xs text-gray-600 max-w-xs">
+      <p className="mb-8 text-sm lg:text-base text-gray-600">
         Ask any questions about your meal and get personalized nutrition advice.
       </p>
 
@@ -144,9 +146,9 @@ function StarterState({
           >
             <span className="flex items-center gap-3">
               <span className="text-charcoal group-hover:text-primary">
-                <DynamicIcon name={item.name} className="size-6 lg:size-5" />
+                <DynamicIcon name={item.name} className="size-6" />
               </span>
-              <span className="text-sm lg:text-xs">{item.label}</span>
+              <span className="text-sm lg:text-base">{item.label}</span>
             </span>
           </button>
         ))}
@@ -166,7 +168,7 @@ function ActiveChatState({ messages }: { messages: Message[] }) {
             className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-xs ${
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base ${
                 isBot
                   ? message.emphasized
                     ? 'bg-white border border-gray-300'
@@ -201,27 +203,27 @@ function ChatInputBar({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#FBFDF5] px-4 pb-6 pt-3">
-      <div className="mx-auto flex max-w-sm items-center gap-3 rounded-full bg-white px-4 py-2 shadow-md border border-gray-200">
+      <div className="mx-auto flex max-w-xl items-center gap-3 rounded-full bg-white px-4 lg:px-6 py-2 lg:py-4 shadow-md border border-gray-200">
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask about your meal..."
-          className="flex-1 border-none bg-transparent text-sm lg:text-xs text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
+          className="flex-1 border-none bg-transparent text-sm lg:text-base text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
         />
         <button
           type="button"
-          className="flex size-9 lg:size-7 items-center justify-center rounded-full bg-secondary text-charcoal"
+          className="flex size-9 items-center justify-center rounded-full bg-secondary text-charcoal"
         >
-          <img className="size-6 lg:size-5" src={image} alt="" />
+          <img className="size-6" src={image} alt="" />
           <span className="sr-only">Attach image</span>
         </button>
         <button
           type="button"
           onClick={onSend}
-          className="flex size-9 lg:size-7  items-center justify-center rounded-full bg-primary text-white"
+          className="flex size-9 items-center justify-center rounded-full bg-primary text-white"
         >
-          <Send className="size-4 lg:size-3" />
+          <Send className="size-4" />
           <span className="sr-only">Send message</span>
         </button>
       </div>
