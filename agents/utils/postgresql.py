@@ -3,11 +3,15 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field, create_engine
+from sqlalchemy import MetaData
 import os
 
+metadata = MetaData()
+
 # User table
-class User(SQLModel, table=True):
+class User(SQLModel, table=True, metadata=metadata):
     __tablename__ = "user"
+    __table_args__ = {"extend_existing": True}
 
     id: UUID = Field(primary_key=True)
     name: str
@@ -21,8 +25,9 @@ class User(SQLModel, table=True):
 
 
 # Images table
-class Image(SQLModel, table=True):
+class Image(SQLModel, table=True, metadata=metadata):
     __tablename__ = "images"
+    __table_args__ = {"extend_existing": True}
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", index=True)
@@ -33,8 +38,9 @@ class Image(SQLModel, table=True):
 
 
 # Conversations table
-class Conversation(SQLModel, table=True):
+class Conversation(SQLModel, table=True, metadata=metadata):
     __tablename__ = "conversations"
+    __table_args__ = {"extend_existing": True}
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", index=True)
@@ -45,8 +51,9 @@ class Conversation(SQLModel, table=True):
 
 
 # Messages table
-class Message(SQLModel, table=True):
+class Message(SQLModel, table=True, metadata=metadata):
     __tablename__ = "messages"
+    __table_args__ = {"extend_existing": True}
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
@@ -63,5 +70,5 @@ if not DATABASE_URL:
 
 engine = create_engine(DATABASE_URL)
 
-# Create tables if not exist
-SQLModel.metadata.create_all(engine)
+# Create tables if not exist using the custom metadata
+metadata.create_all(engine)

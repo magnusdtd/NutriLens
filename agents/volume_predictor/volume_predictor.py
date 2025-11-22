@@ -3,17 +3,32 @@ from PIL import Image
 import cv2
 import time
 from .yolov8 import YOLOv8Seg
+from .yolov8.density_map import density_map
 from .depth_estimator import DepthEstimator
 from .point_cloud_generator import PointCloudGenerator
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
-from utils.mlflow_client import MLFlow
 import os
+from dataclasses import dataclass
+from .yolov8.utils import class_names
+from typing import List
+from io import BytesIO
 from huggingface_hub import hf_hub_download
-import shutil
 
-class VolumePredictor:
+
+@dataclass
+class Prediction:
+    object_name: str
+    volume: float
+    box: List
+    score: float
+    mask: np.ndarray
+    weight: float
+    density: float
+
+
+class VolumePredictor():
     def __init__(
         self,
         yolo_path: str,
@@ -24,41 +39,27 @@ class VolumePredictor:
         conf = 0.25,
         iou = 0.7
     ):
-        self.mlflow_client = MLFlow()
-        try:
-            self.mlflow_client.load_onnx_model(yolo_path, os.environ.get("YOLO_MLFLOW_URI"))
-            self.mlflow_client.load_torch_model(dav2_path, os.environ.get("DAMv2_MLFLOW_URI"))
-        except Exception as e:
-            print(f"MLFlow model loading failed: {e}")
-            print("Falling back to downloading models from Hugging Face Hub...")
 
-            # ---- Download YOLO ONNX Model ----
-            try:
-                yolo_model_onnx_path = hf_hub_download(
-                    repo_id="magnusdtd/yolov8-foodseg103",  # Example repo, update as needed
-                    filename="yolov8_foodseg103.onnx",
-                    cache_dir=os.path.dirname(yolo_path),
-                    resume_download=True,
-                )
-                if yolo_model_onnx_path != yolo_path:
-                    shutil.copyfile(yolo_model_onnx_path, yolo_path)
-                print(f"Downloaded YOLOv8 food segmentation model to {yolo_path}")
-            except Exception as yolo_dl_ex:
-                print(f"Failed to download YOLOv8 model from Huggingface: {yolo_dl_ex}")
+        # Download YOLO model (ONNX)
+        yolo_repo = "magnusdtd/yolov8-foodseg103"
+        yolo_filename = "yolov8_foodseg103.onnx"
+        yolo_model_local_path = hf_hub_download(
+            repo_id=yolo_repo,
+            filename=yolo_filename,
+            cache_dir=os.path.dirname(yolo_path)
+        )
 
-            # ---- Download DepthAnyThing v2 Torch Model ----
-            try:
-                dav2_model_torch_path = hf_hub_download(
-                    repo_id="depth-anything/Depth-Anything-V2-Metric-Hypersim-Small",
-                    filename="depth_anything_v2_metric_hypersim_vits.pth",
-                    cache_dir=os.path.dirname(dav2_path),
-                    resume_download=True,
-                )
-                if dav2_model_torch_path != dav2_path:
-                    shutil.copyfile(dav2_model_torch_path, dav2_path)
-                print(f"Downloaded DepthAnyThing v2 (vits) model to {dav2_path}")
-            except Exception as dav2_dl_ex:
-                print(f"Failed to download DepthAnyThing v2 model from Huggingface: {dav2_dl_ex}")
+        # Download Depth Anything v2 model (torch)
+        dav2_repo = "depth-anything/Depth-Anything-V2-Metric-Hypersim-Small"
+        dav2_filename = "depth_anything_v2_metric_hypersim_vits.pth"
+        dav2_model_local_path = hf_hub_download(
+            repo_id=dav2_repo,
+            filename=dav2_filename,
+            cache_dir=os.path.dirname(dav2_path)
+        )
+        # Assign the downloaded paths to instance variables for use by estimators
+        self.yolo_path = yolo_model_local_path
+        self.dav2_path = dav2_model_local_path
 
         self.depth_estimator = DepthEstimator(dav2_path, model_type=dav2_type)
         self.pc_generator = PointCloudGenerator(focal_length_x, focal_length_y)
@@ -66,10 +67,18 @@ class VolumePredictor:
         self.conf = conf
         self.iou = iou
         
-    def predict(self, img_path: str):
+    def predict(self, img: [str, bytes, Image.Image]) -> List[Prediction]:
         start = time.perf_counter()
 
-        rgb_image = Image.open(img_path).convert("RGB")
+        if isinstance(img, str):
+            rgb_image = Image.open(img).convert("RGB")
+        elif isinstance(img, (bytes, bytearray)):
+            rgb_image = Image.open(BytesIO(img)).convert("RGB")
+        elif isinstance(img, Image.Image):
+            rgb_image = img.convert("RGB")
+        else:
+            raise ValueError("Input img must be a file path (str), bytes, or a PIL.Image.Image.")
+
         width, height = rgb_image.size
         rgb_image = np.array(rgb_image)
 
@@ -79,7 +88,7 @@ class VolumePredictor:
         depth_map = np.array(Image.fromarray(depth_map).resize((width, height), Image.NEAREST))
         print("Depth map has been created")
         
-        _, _, _, masks = self.yolo(rgb_image)
+        boxes, scores, class_ids, masks = self.yolo(rgb_image)
         print("Segmentation masks has been created")
         fixed_masks = []
         for m in masks:
@@ -89,9 +98,21 @@ class VolumePredictor:
             fixed_masks.append(m_resized)
         masks = np.array(fixed_masks)
         
-        result = self.pc_generator.calculate_volumes_from_masks(
+        volumes = self.pc_generator.calculate_volumes_from_masks(
             width, height, depth_map, masks
         )
-        print(f"Pipeline Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
-        return result
 
+        predictions = []
+        num_preds = min(len(boxes), len(volumes), len(scores), len(class_ids), len(masks))
+        for i in range(num_preds):
+            prediction = Prediction(
+                object_name=class_names[class_ids[i]] if class_ids[i] < len(class_names) else str(class_ids[i]),
+                volume=volumes[i],
+                box=boxes[i].tolist() if hasattr(boxes[i], "tolist") else list(boxes[i]),
+                score=float(scores[i]),
+                mask=masks[i]
+            )
+            predictions.append(prediction)
+
+        print(f"Pipeline Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
+        return predictions

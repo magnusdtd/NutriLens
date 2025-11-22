@@ -1,149 +1,92 @@
 import json
-import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict
 
-from langchain.agents import create_agent
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langgraph.graph import END, StateGraph
+from langgraph.graph import END, StateGraph, START
 from langgraph.types import Command
 
-import sys
-from pathlib import Path
+# Tool imports
 sys.path.append(str(Path(__file__).parent))
 from tools.food_nutrition import food_nutrition_tool
 from tools.ocr import clova_ocr_tool
 from tools.user_info import get_user_info_by_user_id
 from tools.volume_predictor import predict_volume_tool
+from langchain.agents import create_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-
+# ---- State definition ----
 class OrchestrationState(TypedDict, total=False):
-    """State container passed between LangGraph nodes."""
-
     messages: List[BaseMessage]
     user_id: Optional[str]
     image: Optional[str]
-    scenario: Optional[str]
-    plan: Dict[str, Any]
-    pending_nodes: List[str]
-    vision_result: Optional[str]
-    nutrition_result: Optional[str]
-    summarizer_result: Optional[str]
-    final_response: Optional[str]
+    # The following are per-agent results
+    vision: Optional[Dict[str, Any]]
+    nutrition: Optional[Dict[str, Any]]
+    summarizer: Optional[Dict[str, Any]]
+    composer: Optional[str]
 
+# ---- Prompts ----
+SUPERVISOR_SYSTEM = """You are a supervisor. Read the user message and any provided image or user id.
+Choose which agents to call, and in what order, to fulfil the request using this list:
+- vision: for food image analysis & extracting OCR/volume
+- nutrition: for nutrition lookup and synthesis
+- summarizer: for user profile/history/context
 
-def _load_prompt(name: str, fallback: str) -> str:
-    prompt_path = Path(__file__).parent.parent / "agents" / "prompts" / f"{name}.txt"
-    if prompt_path.exists():
-        contents = prompt_path.read_text(encoding="utf-8").strip()
-        if contents:
-            return contents
-    return fallback.strip()
+Respond in JSON: { "plan": ["vision",...], "explanation": str }
+"""
+VISION_SYSTEM = """You are an expert in food image analysis.
+- Call 'predict_volume_tool' to get food volume (if necessary)
+- Call 'clova_ocr_tool' to extract text from labels
 
+Reply in JSON containing available info like: detections, ocr, volume, confidence, notes.
+"""
+NUTRITION_SYSTEM = """You synthesize nutrition info from ingredients, ocr and volume.
+Use food_nutrition_tool as needed. Reply in JSON with keys:
+foods, macros, micronutrients, confidence, provenance.
+"""
+SUMMARIZER_SYSTEM = """You pull up user profile and history with get_user_info_by_user_id.
+Summarize any constraints, goals, allergies from the user DB. Reply JSON.
+"""
+COMPOSER_SYSTEM = """Synthesize a readable, actionable user answer.
+Include agent/tool sources and mention uncertainty/assumptions where needed.
+"""
 
-def _build_react_agent(
-    llm: BaseLanguageModel,
-    tools,
-    system_prompt: str,
-):
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ]
-    )
-    return create_agent(llm, tools, prompt=prompt)
+def new_agent(llm, tools, sys_prompt):
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", sys_prompt),
+        ("human", "{input}"),
+        MessagesPlaceholder("agent_scratchpad")
+    ])
+    return create_agent(llm, tools, system_prompt=prompt)
 
-
-def _safe_json_loads(text: str) -> Dict[str, Any]:
-    stripped = text.strip()
-    if stripped.startswith("```"):
-        stripped = re.sub(r"^```(?:json)?", "", stripped, flags=re.IGNORECASE).strip()
-        if stripped.endswith("```"):
-            stripped = stripped[:-3].strip()
+def safe_json(text) -> Any:
+    """Parse a string safely as JSON and return a dict or fallback to str."""
     try:
-        return json.loads(stripped)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", stripped, flags=re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group(0))
-            except json.JSONDecodeError:
-                return {}
-    return {}
-
+        return json.loads(text)
+    except Exception:
+        try:
+            # Sometimes output is like ```json ... ```
+            import re
+            m = re.search(r"\{.*\}", text, flags=re.S)
+            if m: return json.loads(m.group(0))
+        except Exception:
+            pass
+    return text
 
 class MultiAgentGraph:
-    """Builds and runs the LangGraph-based supervisor workflow."""
+    """Simplified LangGraph setup according to agent-flow.md."""
 
     def __init__(self, llm: BaseLanguageModel):
-        supervisor_prompt = _load_prompt(
-            "supervisor",
-            """
-            You orchestrate Vision, Nutrition, and Summarizer agents according to the
-            agent-flow specification. Respond ONLY in compact JSON with keys:
-            - scenario: one of ["A","B","C","D"]
-            - sequence: ordered list of agent node names among
-              ["vision","nutrition","summarizer"] that must run before composer
-            - rationale: short explanation
-            - expected_outputs: list of strings that describe desired data
-            """,
-        )
-        vision_prompt = _load_prompt(
-            "vision",
-            """
-            You analyze user-provided food images. Use tools when appropriate:
-            - predict_volume_tool(image_id: str) for 3D volume estimates
-            - clova_ocr_tool(file_input: str) to extract nutrition labels or text
-            Return a concise JSON string with keys: detections, ocr, volume, confidence,
-            and notes about assumptions.
-            """,
-        )
-        nutrition_prompt = _load_prompt(
-            "nutrition",
-            """
-            You synthesize nutrition facts using food detections, OCR tables, and
-            the food_nutrition_tool(food_name: str). Produce JSON with keys:
-            foods, macros, micronutrients, confidence, and provenance.
-            """,
-        )
-        summarizer_prompt = _load_prompt(
-            "summarizer",
-            """
-            You retrieve user-specific context using get_user_info_by_user_id(user_id: str).
-            Summarize allergies, goals, and history relevant to the request.
-            Output JSON with keys: profile, constraints, goals, and confidence.
-            """,
-        )
-        composer_prompt = _load_prompt(
-            "meal_planning",
-            """
-            Combine the supervisor plan, vision, nutrition, and summarizer outputs into a
-            final assistant reply. Always cite which agents or tools informed each claim
-            and mention uncertainties. Tailor advice to the user profile when available.
-            """,
-        )
-
-        self.supervisor_agent = _build_react_agent(llm, [], supervisor_prompt)
-        self.vision_agent = _build_react_agent(
-            llm,
-            [predict_volume_tool, clova_ocr_tool],
-            vision_prompt,
-        )
-        self.nutrition_agent = _build_react_agent(
-            llm,
-            [food_nutrition_tool],
-            nutrition_prompt,
-        )
-        self.summarizer_agent = _build_react_agent(
-            llm,
-            [get_user_info_by_user_id],
-            summarizer_prompt,
-        )
-        self.composer_agent = _build_react_agent(llm, [], composer_prompt)
+        # Instantiate each agent
+        self.llm = llm
+        self.supervisor = new_agent(llm, [], SUPERVISOR_SYSTEM)
+        self.vision = new_agent(llm, [predict_volume_tool, clova_ocr_tool], VISION_SYSTEM)
+        self.nutrition = new_agent(llm, [food_nutrition_tool], NUTRITION_SYSTEM)
+        self.summarizer = new_agent(llm, [get_user_info_by_user_id], SUMMARIZER_SYSTEM)
+        self.composer = new_agent(llm, [], COMPOSER_SYSTEM)
 
         workflow = StateGraph(OrchestrationState)
         workflow.add_node("supervisor", self._supervisor_node)
@@ -151,122 +94,92 @@ class MultiAgentGraph:
         workflow.add_node("nutrition", self._nutrition_node)
         workflow.add_node("summarizer", self._summarizer_node)
         workflow.add_node("composer", self._composer_node)
-
         workflow.set_entry_point("supervisor")
         workflow.add_edge("composer", END)
-
         self.graph = workflow.compile()
-        self.graph.get_graph().draw_mermaid_png(output_file_path=Path(__file__).parent.parent / "imgs/agent_graph.png")
 
-    @staticmethod
-    def _append_message(state: OrchestrationState, content: str) -> List[BaseMessage]:
-        history = state.get("messages", [])
-        return history + [AIMessage(content=content)]
-
-    @staticmethod
-    def _advance(state: OrchestrationState, updates: Dict[str, Any]) -> Command:
-        pending = state.get("pending_nodes", [])
-        if pending:
-            next_node = pending[0]
-            updates["pending_nodes"] = pending[1:]
-            return Command(update=updates, goto=next_node)
-        return Command(update=updates, goto="composer")
+    def _get_next_agent(self, plan: List[str], results: OrchestrationState) -> Optional[str]:
+        # plan is a list like ["vision", "nutrition", ...]
+        # Return the next agent not yet done (has no output in results)
+        for agent in plan:
+            if results.get(agent) is None:
+                return agent
+        return None
 
     def _supervisor_node(self, state: OrchestrationState) -> Command:
-        user_message = state["messages"][-1].content if state.get("messages") else ""
-        image_ref = state.get("image")
-        enriched_input = (
-            "User request:\n"
-            f"{user_message}\n"
-            f"User ID: {state.get('user_id')}\n"
-            f"Image reference: {image_ref}\n"
-            "Follow the agent-flow routing rules."
-        )
-        response = self.supervisor_agent.invoke({"input": enriched_input})
-        output_text = response.get("output", str(response))
-        plan = _safe_json_loads(output_text)
-        scenario = plan.get("scenario") or "A"
-        sequence = plan.get("sequence") or []
-        sequence = [node for node in sequence if node in {"vision", "nutrition", "summarizer"}]
-        updates: Dict[str, Any] = {
-            "messages": self._append_message(state, f"[Supervisor]\n{output_text}"),
-            "scenario": scenario,
-            "plan": plan,
-        }
-        if sequence:
-            next_node = sequence[0]
-            updates["pending_nodes"] = sequence[1:]
-        else:
-            next_node = "composer"
-            updates["pending_nodes"] = []
-        return Command(update=updates, goto=next_node)
+        # Parse user intent and make a plan
+        msg_content = state["messages"][-1].content if state.get("messages") else ""
+        plan_resp = self.supervisor.invoke({"input": msg_content})
+        plan_json = safe_json(plan_resp.get("output", str(plan_resp)))
+        plan = plan_json.get("plan") or []
+        updates = {"plan": plan}
+        next_agent = plan[0] if plan else "composer"
+        return Command(update=updates, goto=next_agent)
 
     def _vision_node(self, state: OrchestrationState) -> Command:
-        scenario = state.get("scenario", "A")
-        user_msg = state["messages"][0].content if state.get("messages") else ""
-        payload = (
-            f"Scenario: {scenario}\n"
-            f"User request: {user_msg}\n"
-            f"Image reference: {state.get('image')}\n"
-            "Include structured results for detections, OCR, and volume."
-        )
-        response = self.vision_agent.invoke({"input": payload})
-        output_text = response.get("output", str(response))
-        updates = {
-            "vision_result": output_text,
-            "messages": self._append_message(state, f"[Vision]\n{output_text}"),
+        # Only run if "vision" is in the plan
+        info = {
+            "user": state.get("user_id"),
+            "image": state.get("image"),
+            "request": state["messages"][0].content if state.get("messages") else "",
         }
-        return self._advance(state, updates)
+        vision_input = f"User: {info['user']}\nImage: {info['image']}\nRequest: {info['request']}\n"
+        output = self.vision.invoke({"input": vision_input}).get("output", "")
+        result = safe_json(output)
+        updates = {"vision": result}
+        # figure out who is next
+        plan = state.get("plan", ["vision"])
+        next_agent = self._get_next_agent(plan, {**state, **updates})
+        next_agent = next_agent or "composer"
+        return Command(update=updates, goto=next_agent)
 
     def _nutrition_node(self, state: OrchestrationState) -> Command:
-        scenario = state.get("scenario", "A")
-        payload = (
-            f"Scenario: {scenario}\n"
-            f"User request: {state['messages'][0].content if state.get('messages') else ''}\n"
-            f"Vision result: {state.get('vision_result')}\n"
-            "Summarizer context (if any): {summarizer}\n"
-            "Return nutrition insights."
-        ).replace("{summarizer}", state.get("summarizer_result", "N/A"))
-        response = self.nutrition_agent.invoke({"input": payload})
-        output_text = response.get("output", str(response))
-        updates = {
-            "nutrition_result": output_text,
-            "messages": self._append_message(state, f"[Nutrition]\n{output_text}"),
+        # Prepare context from vision and summarizer, if available
+        nut_input = {
+            "request": state["messages"][0].content if state.get("messages") else "",
+            "vision": state.get("vision"),
+            "profile": state.get("summarizer")
         }
-        return self._advance(state, updates)
+        input_text = f"Request: {nut_input['request']}\n" \
+                     f"Vision: {json.dumps(nut_input['vision'], ensure_ascii=False)}\n" \
+                     f"Profile: {json.dumps(nut_input['profile'], ensure_ascii=False)}"
+        output = self.nutrition.invoke({"input": input_text}).get("output", "")
+        result = safe_json(output)
+        updates = {"nutrition": result}
+        plan = state.get("plan", ["nutrition"])
+        next_agent = self._get_next_agent(plan, {**state, **updates})
+        next_agent = next_agent or "composer"
+        return Command(update=updates, goto=next_agent)
 
     def _summarizer_node(self, state: OrchestrationState) -> Command:
-        payload = (
-            f"User ID: {state.get('user_id')}\n"
-            f"User request: {state['messages'][0].content if state.get('messages') else ''}\n"
-            "Fetch and summarize profile constraints."
-        )
-        response = self.summarizer_agent.invoke({"input": payload})
-        output_text = response.get("output", str(response))
-        updates = {
-            "summarizer_result": output_text,
-            "messages": self._append_message(state, f"[Summarizer]\n{output_text}"),
+        sum_input = {
+            "user_id": state.get("user_id"),
+            "request": state["messages"][0].content if state.get("messages") else ""
         }
-        return self._advance(state, updates)
+        input_text = f"User: {sum_input['user_id']}\nRequest: {sum_input['request']}"
+        output = self.summarizer.invoke({"input": input_text}).get("output", "")
+        result = safe_json(output)
+        updates = {"summarizer": result}
+        plan = state.get("plan", ["summarizer"])
+        next_agent = self._get_next_agent(plan, {**state, **updates})
+        next_agent = next_agent or "composer"
+        return Command(update=updates, goto=next_agent)
 
     def _composer_node(self, state: OrchestrationState) -> OrchestrationState:
-        payload = (
-            "Compose the final reply using the following:\n"
-            f"Scenario: {state.get('scenario')}\n"
-            f"Plan: {json.dumps(state.get('plan', {}), ensure_ascii=False)}\n"
-            f"Vision: {state.get('vision_result')}\n"
-            f"Nutrition: {state.get('nutrition_result')}\n"
-            f"Summarizer: {state.get('summarizer_result')}\n"
-            "Return a user-facing answer with action items and cite agent sources."
-        )
-        response = self.composer_agent.invoke({"input": payload})
-        output_text = response.get("output", str(response))
-        messages = self._append_message(state, f"[Composer]\n{output_text}")
-        return {
-            **state,
-            "messages": messages,
-            "final_response": output_text,
+        input_data = {
+            "plan": state.get("plan"),
+            "vision": state.get("vision"),
+            "nutrition": state.get("nutrition"),
+            "summarizer": state.get("summarizer"),
+            "user": state.get("user_id")
         }
+        input_text = f"Plan: {json.dumps(input_data['plan'], ensure_ascii=False)}\n"\
+                     f"Vision: {json.dumps(input_data['vision'], ensure_ascii=False)}\n"\
+                     f"Nutrition: {json.dumps(input_data['nutrition'], ensure_ascii=False)}\n"\
+                     f"Summarizer: {json.dumps(input_data['summarizer'], ensure_ascii=False)}\n"
+        resp = self.composer.invoke({"input": input_text})
+        output = resp.get("output", str(resp))
+        return {**state, "composer": output}
 
     def invoke(
         self,
@@ -279,7 +192,5 @@ class MultiAgentGraph:
             "messages": [HumanMessage(content=user_message)],
             "user_id": user_id,
             "image": image,
-            "pending_nodes": [],
         }
         return self.graph.invoke(initial_state)
-

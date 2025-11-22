@@ -1,6 +1,14 @@
 FROM ghcr.io/astral-sh/uv:0.8.21 AS uv_builder
 
 FROM python:3.12-slim AS build
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libegl1 \
+    libgl1 \
+    libgomp1 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/
+
 COPY --from=uv_builder /uv /uvx /bin/
 
 WORKDIR /app
@@ -18,6 +26,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 FROM python:3.12-slim AS runtime
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libegl1 \
+    libgl1 \
+    libgomp1 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/
+
 ENV PATH="/app/.venv/bin:$PATH"
 
 RUN groupadd -g 1001 appgroup && \

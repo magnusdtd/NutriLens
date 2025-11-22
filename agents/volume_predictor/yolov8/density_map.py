@@ -1,0 +1,107 @@
+
+density_map = {
+    'background': 0.0,
+    'candy': 1.5,  # g/cm^3, typical high density for candy
+    'egg tart': 0.6,  # based on pastry and egg content
+    'french fries': 0.7,  # fried potato, some air
+    'chocolate': 1.3,  # solid
+    'biscuit': 0.5,  # more air, baked
+    'popcorn': 0.13,  # puffed corn is low density
+    'pudding': 1.1,
+    'ice cream': 0.6,  # airy
+    'cheese butter': 1.0,
+    'cake': 0.45,  # airy, lots of bubbles
+    'wine': 1.0,
+    'milkshake': 1.05,
+    'coffee': 1.0,
+    'juice': 1.05,
+    'milk': 1.03,
+    'tea': 1.0,
+    'almond': 0.7,
+    'red beans': 0.84,
+    'cashew': 0.6,
+    'dried cranberries': 0.63,
+    'soy': 0.72,
+    'walnut': 0.65,
+    'peanut': 0.7,
+    'egg': 1.03,  # whole egg
+    'apple': 0.61,
+    'date': 1.1,
+    'apricot': 0.97,
+    'avocado': 0.66,
+    'banana': 0.94,
+    'strawberry': 0.59,
+    'cherry': 0.82,
+    'blueberry': 0.69,
+    'raspberry': 0.53,
+    'mango': 0.97,
+    'olives': 1.0,
+    'peach': 0.92,
+    'lemon': 1.1,
+    'pear': 0.59,
+    'fig': 0.97,
+    'pineapple': 0.98,
+    'grape': 0.85,
+    'kiwi': 0.81,
+    'melon': 0.53,
+    'orange': 0.84,
+    'watermelon': 0.96,
+    'steak': 1.0,  # raw
+    'pork': 1.11,
+    'chicken duck': 1.08,
+    'sausage': 1.03,
+    'fried meat': 1.05,
+    'lamb': 1.13,
+    'sauce': 1.1,
+    'crab': 1.08,
+    'fish': 1.06,
+    'shellfish': 1.15,
+    'shrimp': 1.13,
+    'soup': 1.02,  # mostly water
+    'bread': 0.28,  # airy
+    'corn': 0.72,
+    'hamburg': 0.86,
+    'pizza': 0.65,
+    ' hanamaki baozi': 0.33,  # steamed bun
+    'wonton dumplings': 0.35,
+    'pasta': 0.65,  # cooked
+    'noodles': 0.6,
+    'rice': 0.85,  # cooked
+    'pie': 0.8,
+    'tofu': 0.72,
+    'eggplant': 0.88,
+    'potato': 0.70,
+    'garlic': 0.97,
+    'cauliflower': 0.41,
+    'tomato': 0.94,
+    'kelp': 1.1,
+    'seaweed': 0.91,
+    'spring onion': 0.64,
+    'rape': 0.91,  # assuming "rapeseed/leafy"
+    'ginger': 0.91,
+    'okra': 0.94,
+    'lettuce': 0.23,
+    'pumpkin': 0.92,
+    'cucumber': 0.65,
+    'white radish': 0.62,
+    'carrot': 0.64,
+    'asparagus': 0.69,
+    'bamboo shoots': 0.57,
+    'broccoli': 0.34,
+    'celery stick': 0.54,
+    'cilantro mint': 0.27,
+    'snow peas': 0.62,
+    ' cabbage': 0.31,
+    'bean sprouts': 0.22,
+    'onion': 0.59,
+    'pepper': 0.98,
+    'green beans': 0.63,
+    'French beans': 0.63,
+    'king oyster mushroom': 0.38,
+    'shiitake': 0.38,
+    'enoki mushroom': 0.23,
+    'oyster mushroom': 0.27,
+    'white button mushroom': 0.20,
+    'salad': 0.14,
+    'other ingredients': 1.0
+}
