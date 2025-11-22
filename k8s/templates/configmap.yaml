@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "naver-hkt.name" . }}-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "naver-hkt.labels" . | nindent 4 }}
+data:
+  SPRING_DATASOURCE_URL: {{ include "naver-hkt.springDatasourceUrl" . | quote }}
+  MINIO_URL: {{ include "naver-hkt.minioUrl" . | quote }}
+  MINIO_BUCKET_NAME: {{ .Values.backend.env.MINIO_BUCKET_NAME | quote }}
+  AI_GATEWAY_URL: {{ include "naver-hkt.aiGatewayUrl" . | quote }}

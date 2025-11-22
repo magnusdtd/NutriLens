@@ -1,4 +1,3 @@
-import getProfile from '@/services/profile.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { X } from 'lucide-react'

@@ -1,0 +1,78 @@
+{{- if .Values.agentSystem.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "naver-hkt.name" . }}-agent-system
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "naver-hkt.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent-system
+spec:
+  replicas: {{ .Values.agentSystem.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "naver-hkt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: agent-system
+  template:
+    metadata:
+      labels:
+        {{- include "naver-hkt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: agent-system
+    spec:
+      containers:
+      - name: multi-agent-system
+        image: {{ include "naver-hkt.image" (dict "Values" .Values "repository" .Values.agentSystem.image.repository "tag" .Values.agentSystem.image.tag) }}
+        imagePullPolicy: {{ .Values.agentSystem.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.agentSystem.service.port }}
+          name: http
+        env:
+        - name: CLOVASTUDIO_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: CLOVASTUDIO_API_KEY
+        - name: MINIO_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "naver-hkt.name" . }}-config
+              key: MINIO_URL
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: MINIO_USER
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: MINIO_PASSWORD
+        - name: CLOVA_OCR_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: CLOVA_OCR_SECRET
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "naver-hkt.name" . }}-config
+              key: DATABASE_URL
+        resources:
+          {{- toYaml .Values.agentSystem.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.agentSystem.service.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 15
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.agentSystem.service.port }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 10
+          failureThreshold: 3
+{{- end }}

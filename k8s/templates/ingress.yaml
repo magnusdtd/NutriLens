@@ -1,0 +1,42 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "naver-hkt.name" . }}-ingress
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "naver-hkt.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+  - hosts:
+    - {{ .Values.global.domain }}
+    secretName: {{ include "naver-hkt.name" . }}-tls
+  rules:
+  - host: {{ .Values.global.domain }}
+    http:
+      paths:
+      # Frontend route - exact root path only
+      - path: /
+        pathType: Exact
+        backend:
+          service:
+            name: {{ include "naver-hkt.name" . }}-frontend
+            port:
+              number: {{ .Values.frontend.service.port }}
+      # Backend routes - all other paths
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "naver-hkt.name" . }}-backend
+            port:
+              number: {{ .Values.backend.service.port }}
+{{- end }}
+

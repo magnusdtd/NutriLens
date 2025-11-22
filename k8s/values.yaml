@@ -1,0 +1,143 @@
+# Production values
+
+global:
+  environment: production
+  domain: naver-hkt-synapsex.duckdns.org
+  imagePullPolicy: Always
+
+# Namespace configuration
+namespace:
+  create: false
+  name: naver-hkt-app
+
+# Backend (Java) configuration
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: magnusdtd/naver-hkt-backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8082
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+  env:
+    MINIO_BUCKET_NAME: "images"
+    AI_GATEWAY_URL: "http://naver-hkt-agent-system:8000"
+
+# Frontend (React) configuration
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: magnusdtd/naver-hkt-frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: LoadBalancer
+    port: 8070
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 400m
+      memory: 512Mi
+
+# Database (PostgreSQL) configuration
+database:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    size: 10Gi
+  auth:
+    username: user
+    password: password
+    database: mydatabase
+
+# MinIO configuration
+minio:
+  enabled: true
+  image:
+    repository: minio/minio
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    apiPort: 9000
+    consolePort: 9001
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    size: 10Gi
+  auth:
+    username: minioadmin
+    password: minioadmin
+
+# Agent System (Multi-Agent System) configuration
+agentSystem:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: magnusdtd/naver-hkt-agent-system
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: LoadBalancer
+    port: 8000
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+# Secrets configuration (should be overridden with actual production secrets)
+secrets:
+  googleClientId: "googleClientId"
+  googleClientSecret: "googleClientSecret"
+  secretKey: "this_is_a_secret_key"
+  jwtSecret: "this_is_a_jwt_secret_key"
+  dbUser: "user"
+  dbPassword: "password"
+  minioUser: "minioadmin"
+  minioPassword: "minioadmin"
+  clovastudioApiKey: "clovastudioApiKey"
+  clovaOcrSecret: "clovaOcrSecret"
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" 

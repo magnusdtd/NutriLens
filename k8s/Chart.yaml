@@ -1,0 +1,17 @@
+apiVersion: v2
+name: naver-hkt
+description: A Helm chart
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - ai
+  - computer-vision
+  - fastapi
+  - react
+home: https://magnusdtd.github.io/NutriLens
+sources: 
+  - https://github.com/magnusdtd/NutriLens
+maintainers:
+  - name: Navar Hackathon Team
+    email: tdat0306@gmail.com

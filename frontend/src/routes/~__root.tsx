@@ -2,7 +2,7 @@ import { Outlet, createRootRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 // import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 // import { TanStackDevtools } from '@tanstack/react-devtools'
-import Header from '@/components/header'
+import Header from '@/components/Header'
 import { useAuthStore } from '@/stores/auth.store'
 import getProfile from '@/services/profile.service'
 
