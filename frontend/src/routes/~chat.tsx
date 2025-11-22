@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { MessageCircle, Send } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { MessageCircle } from 'lucide-react'
 import type { IconName } from 'lucide-react/dynamic'
 import { DynamicIcon } from 'lucide-react/dynamic'
-import image from '/icons/image.svg'
 import chat from '@/services/chat.service'
+import ChatInputBar from '@/components/chat-input-bar'
+import { useAuthStore } from '@/stores/auth.store'
 
 export const Route = createFileRoute('/chat')({
   component: ChatPage,
@@ -15,6 +16,7 @@ type Message = {
   sender: 'user' | 'bot'
   text: string
   emphasized?: boolean
+  imageUrl?: string | null
 }
 
 interface starterSuggestion {
@@ -42,24 +44,44 @@ const starterSuggestions: starterSuggestion[] = [
 ]
 
 function ChatPage() {
+  const user = useAuthStore((state) => state.user)
+  const token = useAuthStore((state) => state.token)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
+  const [attachedImage, setAttachedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const hasStarted = messages.length > 0
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
+
   const handleSend = async (value?: string) => {
     const content = (value ?? input).trim()
-    if (!content) return
+    if (!content && !attachedImage) return
 
     setInput('')
+    const previewForMessage = imagePreview
 
     const chatResponse = await chat({
-      message: content,
+      userId: user?.id,
+      message: content || undefined,
+      token: token,
+      image: attachedImage ?? undefined,
     })
 
     const responseMsg = chatResponse
       ? chatResponse
       : 'An error occur, please try again'
+
+    setAttachedImage(null)
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+      setImagePreview(null)
+    }
 
     setMessages((prev) => {
       if (prev.length === 0) {
@@ -67,6 +89,7 @@ function ChatPage() {
           id: 1,
           sender: 'user',
           text: content,
+          imageUrl: previewForMessage,
         }
         const response: Message = {
           id: 2,
@@ -91,6 +114,7 @@ function ChatPage() {
           id: nextId,
           sender: 'user',
           text: content,
+          imageUrl: previewForMessage,
         },
         response,
       ]
@@ -115,6 +139,17 @@ function ChatPage() {
         value={input}
         onChange={setInput}
         onSend={() => handleSend()}
+        imagePreview={imagePreview}
+        onImageSelect={(file) => {
+          if (imagePreview) URL.revokeObjectURL(imagePreview)
+          setAttachedImage(file)
+          setImagePreview(URL.createObjectURL(file))
+        }}
+        onRemoveImage={() => {
+          if (imagePreview) URL.revokeObjectURL(imagePreview)
+          setAttachedImage(null)
+          setImagePreview(null)
+        }}
       />
     </div>
   )
@@ -168,7 +203,7 @@ function ActiveChatState({ messages }: { messages: Message[] }) {
             className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base ${
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base space-y-2 ${
                 isBot
                   ? message.emphasized
                     ? 'bg-white border border-gray-300'
@@ -176,57 +211,18 @@ function ActiveChatState({ messages }: { messages: Message[] }) {
                   : 'bg-primary text-white rounded-br-sm'
               }`}
             >
+              {message.imageUrl && (
+                <img
+                  src={message.imageUrl}
+                  alt="Uploaded"
+                  className="max-h-48 w-auto rounded-xl object-cover"
+                />
+              )}
               {message.text}
             </div>
           </div>
         )
       })}
-    </div>
-  )
-}
-
-function ChatInputBar({
-  value,
-  onChange,
-  onSend,
-}: {
-  value: string
-  onChange: (value: string) => void
-  onSend: () => void
-}) {
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      onSend()
-    }
-  }
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[#FBFDF5] px-4 pb-6 pt-3">
-      <div className="mx-auto flex max-w-xl items-center gap-3 rounded-full bg-white px-4 lg:px-6 py-2 lg:py-4 shadow-md border border-gray-200">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask about your meal..."
-          className="flex-1 border-none bg-transparent text-sm lg:text-base text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
-        />
-        <button
-          type="button"
-          className="flex size-9 items-center justify-center rounded-full bg-secondary text-charcoal"
-        >
-          <img className="size-6" src={image} alt="" />
-          <span className="sr-only">Attach image</span>
-        </button>
-        <button
-          type="button"
-          onClick={onSend}
-          className="flex size-9 items-center justify-center rounded-full bg-primary text-white"
-        >
-          <Send className="size-4" />
-          <span className="sr-only">Send message</span>
-        </button>
-      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import logo from '/icons/logo.svg'
 import { useState } from 'react'
 import login from '@/services/login.service'
@@ -10,6 +10,7 @@ export const Route = createFileRoute('/login')({
 })
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState<string>()
   const [password, setPassword] = useState<string>()
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated)
@@ -31,6 +32,7 @@ function RouteComponent() {
         if (userProfile) {
           setUser(userProfile)
           setIsAuthenticated(true)
+          navigate({to: '/'})
         }
       }
     } catch (error) {

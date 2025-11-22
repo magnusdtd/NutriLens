@@ -1,9 +1,9 @@
 import getProfile from '@/services/profile.service'
 import { useAuthStore } from '@/stores/auth.store'
-import type { UserProfile } from '@/types'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { updateProfile as updateProfileService } from '@/services/profile.service'
 
 export const Route = createFileRoute('/profile')({
   beforeLoad: () => {
@@ -18,34 +18,133 @@ export const Route = createFileRoute('/profile')({
 })
 
 function RouteComponent() {
-  const user = useAuthStore((state) => (state.user))
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  // This cause infinite-rerender (?)
+  // const { user, token, setUser } = useAuthStore((state) => ({
+  //   user: state.user,
+  //   token: state.token,
+  //   setUser: state.setUser,
+  // }))
+
+  // Fix
+  const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
+  const setUser = useAuthStore((s) => s.setUser)
+
+
   const [editPersonalInfoModal, setEditPersonalInfoModal] = useState<boolean>(false)
 
+  const [username, setUsername] = useState<string>()
+  const [gender, setGender] = useState<'Male' | 'Female'>()
+  const [age, setAge] = useState<number>()
+  const [weight, setWeight] = useState<number>()
+  const [height, setHeight] = useState<number>()
+  const [cuisine, setCuisine] = useState<string>()
+  const [calorieGoal, setCalorieGoal] = useState<number>()
+  const [specialDiet, setSpecialDiet] = useState<string>()
+
   useEffect(() => {
-    setUserProfile(user)
-    console.log(userProfile)
+    if (!user) return
+
+    setUsername(user.username)
+    setGender(user.gender)
+    setAge(user.age)
+    setWeight(user.weight)
+    setHeight(user.height)
+    setCuisine(user.cuisine)
+    setCalorieGoal(user.calorieGoal)
+    setSpecialDiet(user.specialDiet)
   }, [user])
+
+  async function updateProfile() {
+    if (!user) return
+
+    const payload = {
+      username: username ?? user.username ?? '',
+      age: age ?? user.age ?? 0,
+      gender: gender ?? user.gender,
+      height: height ?? user.height ?? 0,
+      weight: weight ?? user.weight ?? 0,
+      cuisine: cuisine ?? user.cuisine ?? '',
+      calorieGoal: calorieGoal ?? user.calorieGoal ?? 0,
+      specialDiet: specialDiet ?? user.specialDiet ?? '',
+    }
+
+    const updatedProfile = await updateProfileService(
+      user.id,
+      payload,
+      token ?? localStorage.getItem('accessToken'),
+    )
+
+    if (updatedProfile) {
+      setUser(updatedProfile)
+      setGender(updatedProfile.gender)
+      setAge(updatedProfile.age)
+      setWeight(updatedProfile.weight)
+      setHeight(updatedProfile.height)
+      setCuisine(updatedProfile.cuisine)
+      setCalorieGoal(updatedProfile.calorieGoal)
+      setSpecialDiet(updatedProfile.specialDiet)
+      setEditPersonalInfoModal(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Submit on Enter (without Shift)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      e.currentTarget.blur() // force blur → triggers submit
+    }
+  }
 
   return (
     <div className="relative h-full w-full max-w-xl p-4 lg:p-6 flex flex-col gap-5">
       {editPersonalInfoModal && (
-        <div className="fixed top-0 left-0 w-screen h-full flex flex-col items-center justify-center z-10 bg-black/80">
+        <div className="fixed top-0 left-0 w-screen h-full flex flex-col items-center justify-center [@media(max-height:800px)]:justify-start overflow-auto z-10 bg-black/80">
           <div className="z-20 min-w-xs py-6 p-4 bg-white flex flex-col gap-2">
             <div className="flex flex-row items-center justify-between">
               <p className="font-semibold text-xl">Edit Profile</p>
-              <X className='cursor-pointer' onClick={() => setEditPersonalInfoModal(false)}/>
+              <X
+                className="cursor-pointer"
+                onClick={() => setEditPersonalInfoModal(false)}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-base" htmlFor="">
                 Gender
               </label>
               <div className="min-h-10 w-full bg-yellow-green rounded-md p-4">
-                <select className="w-full text-sm">
+                <select
+                  className="w-full text-sm"
+                  value={gender ?? ''}
+                  onChange={(e) =>
+                    setGender(e.target.value as 'Male' | 'Female')
+                  }
+                >
                   <option value="">--Select--</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-base" htmlFor="">
+                Age
+              </label>
+              <div className="flex flex-row gap-2 justify-between items-center min-h-10 w-full bg-yellow-green rounded-md p-2">
+                <input
+                  className="w-full p-2 text-sm"
+                  placeholder="E.g: 20"
+                  type="number"
+                  value={age ?? ''}
+                  onChange={(e) =>
+                    setAge(
+                      e.target.value === ''
+                        ? undefined
+                        : Number(e.target.value),
+                    )
+                  }
+                />
+                <p className="text-sm text-gray-500">kg</p>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -55,8 +154,16 @@ function RouteComponent() {
               <div className="flex flex-row gap-2 justify-between items-center min-h-10 w-full bg-yellow-green rounded-md p-2">
                 <input
                   className="w-full p-2 text-sm"
-                  placeholder="75"
+                  placeholder="E.g: 75"
                   type="number"
+                  value={weight ?? ''}
+                  onChange={(e) =>
+                    setWeight(
+                      e.target.value === ''
+                        ? undefined
+                        : Number(e.target.value),
+                    )
+                  }
                 />
                 <p className="text-sm text-gray-500">kg</p>
               </div>
@@ -68,8 +175,16 @@ function RouteComponent() {
               <div className="flex flex-row gap-2 justify-between items-center min-h-10 w-full bg-yellow-green rounded-md p-2">
                 <input
                   className="w-full p-2 text-sm"
-                  placeholder="75"
+                  placeholder="E.g: 75"
                   type="number"
+                  value={height ?? ''}
+                  onChange={(e) =>
+                    setHeight(
+                      e.target.value === ''
+                        ? undefined
+                        : Number(e.target.value),
+                    )
+                  }
                 />
                 <p className="text-sm text-gray-500">cm</p>
               </div>
@@ -80,8 +195,10 @@ function RouteComponent() {
               </label>
               <input
                 className="min-h-10 w-full bg-yellow-green rounded-md p-4 text-sm"
-                placeholder="Vietnamese"
+                placeholder="E.g: Vietnamese"
                 type="text"
+                value={cuisine ?? ''}
+                onChange={(e) => setCuisine(e.target.value)}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -91,8 +208,16 @@ function RouteComponent() {
               <div className="flex flex-row gap-2 justify-between items-center min-h-10 w-full bg-yellow-green rounded-md p-2">
                 <input
                   className="w-full p-2 text-sm"
-                  placeholder="2000"
+                  placeholder="E.g: 2000"
                   type="number"
+                  value={calorieGoal ?? ''}
+                  onChange={(e) =>
+                    setCalorieGoal(
+                      e.target.value === ''
+                        ? undefined
+                        : Number(e.target.value),
+                    )
+                  }
                 />
                 <p className="text-sm text-gray-500">kcal</p>
               </div>
@@ -103,14 +228,19 @@ function RouteComponent() {
               </label>
               <input
                 className="min-h-10 w-full bg-yellow-green rounded-md p-4 text-sm"
-                placeholder="gluton-free"
+                placeholder="E.g: gluton-free"
                 type="text"
+                value={specialDiet ?? ''}
+                onChange={(e) => setSpecialDiet(e.target.value)}
               />
             </div>
             <div className="mt-4 flex flex-row justify-end">
-              <div className="cursor-pointer bg-yellow-green-dark hover:bg-yellow-green-dark/90 p-2 px-4 rounded-md text-white text-sm">
+              <button
+                onClick={updateProfile}
+                className="cursor-pointer bg-yellow-green-dark hover:bg-yellow-green-dark/90 p-2 px-4 rounded-md text-white text-sm"
+              >
                 Save Changes
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -132,9 +262,13 @@ function RouteComponent() {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <p className="text-lg lg:text-xl font-semibold text-gray-800">
-                  {userProfile && userProfile.username}
-                </p>
+                <div
+                  contentEditable
+                  onInput={(e) => setUsername(e.currentTarget.innerText)}
+                  onBlur={updateProfile}
+                  onKeyDown={handleKeyDown}
+                  className="flex-0 text-lg lg:text-xl font-semibold text-gray-800"
+                >{username}</div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -147,15 +281,13 @@ function RouteComponent() {
                   <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z" />
                 </svg>
               </div>
-              <p className="text-sm text-gray-500">
-                {userProfile && userProfile.email}
-              </p>
+              <p className="text-sm text-gray-500">{user && user.email}</p>
             </div>
           </div>
           <div className="border-t border-gray-100 pt-3 flex items-center justify-between text-sm text-gray-600">
             <p className="text-gray-600">Joined</p>
             <p className="font-medium text-gray-700">
-              {userProfile && userProfile.createdAt}
+              {user && user.createdAt}
             </p>
           </div>
         </div>
@@ -166,8 +298,13 @@ function RouteComponent() {
         <p className="text-sm text-gray-600">Meals Analyzed</p>
       </div> */}
 
-      <div onClick={() => setEditPersonalInfoModal(true)} className='w-full flex flex-row justify-end gap-4'>
-        <p className='text-xs text-yellow-green-dark hover:underline hover:underline-offset-2 cursor-pointer'>Edit profile</p>
+      <div
+        onClick={() => setEditPersonalInfoModal(true)}
+        className="w-full flex flex-row justify-end gap-4"
+      >
+        <p className="text-xs text-yellow-green-dark hover:underline hover:underline-offset-2 cursor-pointer">
+          Edit profile
+        </p>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -192,19 +329,23 @@ function RouteComponent() {
             {[
               {
                 label: 'Gender',
-                value: (userProfile && userProfile.gender) || 'Male',
+                value: gender || 'Male',
+              },
+              {
+                label: 'Age',
+                value: age || 20,
               },
               {
                 label: 'Weight',
-                value: (userProfile && userProfile.weight) || '70',
+                value: weight || '70',
                 metrics: 'kg',
               },
               {
                 label: 'Height',
-                value: (userProfile && userProfile.height) || '175',
+                value: height || '175',
                 metrics: 'cm',
               },
-              { label: 'Cuisine', value: 'Vietnam' },
+              { label: 'Cuisine', value: cuisine || 'Vietnam' },
             ].map((item) => (
               <div
                 key={item.label}
@@ -245,16 +386,14 @@ function RouteComponent() {
               Daily Calorie Goal
             </p>
             <p className="text-sm font-semibold text-yellow-green-dark">
-              {userProfile && userProfile.height}
+              {calorieGoal}
             </p>
           </div>
           <div className="bg-lime-50 rounded-xl px-4 py-3">
             <p className="text-base font-semibold text-gray-800">
               Diet Requirements
             </p>
-            <p className="text-base font-medium text-gray-500">
-              {userProfile && userProfile.specialDiet}
-            </p>
+            <p className="text-sm font-medium text-gray-500">{specialDiet}</p>
           </div>
         </div>
       </div>

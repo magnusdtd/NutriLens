@@ -6,7 +6,8 @@ export type UserProfile = {
   gender: "Male" | "Female"
   height: number
   weight: number
-  goals: string
+  cuisine: string
+  calorieGoal: number
   specialDiet: string
   updatedAt: string
   createdAt: string

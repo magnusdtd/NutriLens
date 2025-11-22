@@ -5,6 +5,7 @@ import LoaderCircleRotate from '@/components/loader-circle-rotate'
 import tick from '/icons/tick.svg'
 import { BotMessageSquare, Salad } from 'lucide-react'
 import imageAnalyze from '@/services/image-analyze.service'
+import { useAuthStore } from '@/stores/auth.store'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -125,6 +126,7 @@ interface AnalyzeInfo {
 }
 
 function Home() {
+  const token = useAuthStore((state) => (state.token))
   const [image, setImage] = useState<ImageRequest | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [currentProcessId, setCurrentProcessId] = useState<number | null>(null)
@@ -138,7 +140,10 @@ function Home() {
 
     let analyzeResponse: AnalyzeInfo
     const getAnalyzeResult = async () => {
-      analyzeResponse = await imageAnalyze(image)
+      analyzeResponse = await imageAnalyze({
+        image: image.image,
+        token: token,
+      })
       if (analyzeResponse) console.log(analyzeResponse)
     }
 
