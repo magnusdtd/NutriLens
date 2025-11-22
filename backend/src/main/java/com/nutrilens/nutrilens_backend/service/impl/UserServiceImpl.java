@@ -4,6 +4,7 @@ import com.nutrilens.nutrilens_backend.common.dto.user.UserDetailDto;
 import com.nutrilens.nutrilens_backend.common.dto.user.UserProfileRequestDTO;
 import com.nutrilens.nutrilens_backend.common.entity.User;
 import com.nutrilens.nutrilens_backend.converter.UserConverter;
+import com.nutrilens.nutrilens_backend.repository.ImageRepository;
 import com.nutrilens.nutrilens_backend.repository.UserRepository;
 import com.nutrilens.nutrilens_backend.service.UserService;
 import org.springframework.stereotype.Service;
@@ -15,17 +16,22 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserConverter userConverter;
+    private final ImageRepository imageRepository;
 
-    public UserServiceImpl(UserRepository userRepository, UserConverter userConverter) {
+    public UserServiceImpl(UserRepository userRepository, UserConverter userConverter, ImageRepository imageRepository) {
         this.userRepository = userRepository;
         this.userConverter = userConverter;
+        this.imageRepository = imageRepository;
     }
 
     @Override
     public UserDetailDto getMe(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return userConverter.convertToDTO(user);
+        UserDetailDto dto = userConverter.convertToDTO(user);
+        long count = imageRepository.countByUserId(user.getId());
+        dto.setTotalMealsAnalyzed(count);
+        return dto;
     }
 
     @Override

@@ -35,5 +35,6 @@ public class UserDetailDto {
 
     private String cuisine;
 
+    private Long totalMealsAnalyzed;
 }
 
