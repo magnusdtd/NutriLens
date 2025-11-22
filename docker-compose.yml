@@ -37,7 +37,7 @@ services:
     build:
       context: agents/
       dockerfile: Dockerfile
-    image: magnusdtd/naver-hkt-agent
+    image: magnusdtd/naver-hkt-agent-system
     ports:
       - "8000:8000"
     depends_on:
