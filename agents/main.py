@@ -7,7 +7,7 @@ from pydantic import BaseModel
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
-from agents.supervisor import SupervisorAgent
+# from agents.supervisor import SupervisorAgent
 from sqlmodel import Session, select
 from utils.postgresql import engine, Image
 from fastapi.responses import StreamingResponse
@@ -23,7 +23,7 @@ chat = ChatClovaX(
     max_retries=2,
 )
 
-supervisor = SupervisorAgent(llm=chat)
+# supervisor = SupervisorAgent(llm=chat)
 
 
 def lifespan(app: FastAPI):
@@ -88,11 +88,20 @@ async def chat_completion(payload: ChatRequest):
     if not payload.message:
         raise HTTPException(status_code=400, detail="message field is required.")
 
-    result = supervisor.execute(
-        user_message=payload.message,
-        user_id=payload.user_id,
-        image=payload.image,
-    )
+    # result = supervisor.execute(
+    #     user_message=payload.message,
+    #     user_id=payload.user_id,
+    #     image=payload.image,
+    # )
+    messages = [
+        (
+            "system",
+            "You are a helpful assistant that translates English to Korean. Translate the user sentence.",
+        ),
+        ("human", "I love using NAVER AI."),
+    ]
+
+    result = chat.invoke(messages)
 
     langfuse.flush()
     return {"reply": result.get("response"), "chat_name": "Healthy Meal"}
