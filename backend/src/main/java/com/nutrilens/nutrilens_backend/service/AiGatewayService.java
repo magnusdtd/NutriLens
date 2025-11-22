@@ -7,5 +7,5 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface AiGatewayService {
     AiChatResponse getChatReplyFromAgent(AiChatRequest request);
-    VisionAnalyzeResponseDTO analyzeImage(MultipartFile imageFile);
+    VisionAnalyzeResponseDTO predictImage(String userId, String imageId);
 }

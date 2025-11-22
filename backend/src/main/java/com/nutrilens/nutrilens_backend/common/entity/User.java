@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "\"user\"")
 public class User extends Auditable {
 
     @Id

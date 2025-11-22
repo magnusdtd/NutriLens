@@ -1,25 +1,26 @@
 package com.nutrilens.nutrilens_backend.common.dto.vision;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class VisionAnalyzeResponseDTO {
+
     private List<String> predictions;
+
+    @JsonProperty("nutritional_info")
     private NutritionalInfo nutritionalInfo;
 
-    @Getter
-    @Setter
+    @Data
     @Builder
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class NutritionalInfo {
         private Integer calories;
         private Double protein;

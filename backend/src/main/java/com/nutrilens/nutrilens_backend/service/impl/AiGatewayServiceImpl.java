@@ -40,8 +40,22 @@ public class AiGatewayServiceImpl implements AiGatewayService {
     }
 
     @Override
-    public VisionAnalyzeResponseDTO analyzeImage(MultipartFile imageFile) {
-        log.info("Sending image to AI Gateway (/api/predict_img)");
-        throw new UnsupportedOperationException("AI Gateway call for image analysis is not implemented yet.");
+    public VisionAnalyzeResponseDTO predictImage(String userId, String imageId) {
+        log.info("Sending request to AI Gateway (/api/predict_img) with user_id={} and image_id={}", userId, imageId);
+        try {
+            return webClient.post()
+                    .uri(uriBuilder -> uriBuilder.path("/api/predict_img")
+                            .queryParam("user_id", userId)
+                            .queryParam("image_id", imageId)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(VisionAnalyzeResponseDTO.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Failed to analyze image via AI Gateway", e);
+            throw new RuntimeException("Error communicating with the Vision AI system.", e);
+        }
     }
+
+
 }

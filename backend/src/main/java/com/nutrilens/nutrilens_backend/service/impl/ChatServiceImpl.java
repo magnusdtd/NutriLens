@@ -43,7 +43,6 @@ public class ChatServiceImpl implements ChatService {
     private final ImageRepository imageRepository;
 
     @Override
-    @Transactional
     public ChatResponseDTO processChat(UUID userId, UUID conversationId, String messageContent, MultipartFile imageFile) {
         Conversation conversation = findOrCreateConversation(userId, conversationId);
 
@@ -79,8 +78,14 @@ public class ChatServiceImpl implements ChatService {
         AiChatResponse aiResponse = aiGatewayService.getChatReplyFromAgent(aiRequest);
         String replyContent = aiResponse.getReply();
 
-        saveMessage(conversation, "user", messageContent, imageFile != null ? imageRepository.findById(UUID.fromString(Objects.requireNonNull(imageIdStr))).orElse(null) : null);
+        Image image = null;
+        if (imageFile != null && imageIdStr != null) {
+            image = imageRepository.findById(UUID.fromString(imageIdStr)).orElse(null);
+        }
+
+        saveMessage(conversation, "user", messageContent, image);
         saveMessage(conversation, "assistant", replyContent, null);
+
 
         if (conversation.getChatName().equals("New Chat")) {
             chatTitleService.generateTitleAsync(conversation, messageContent);
