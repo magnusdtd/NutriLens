@@ -26,58 +26,52 @@ spec:
         ports:
         - containerPort: {{ .Values.backend.service.port }}
           name: http
-        command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "{{ .Values.backend.service.port }}", "--reload"]
         env:
-        - name: DATABASE_URL
+        - name: SPRING_DATASOURCE_URL
           valueFrom:
             configMapKeyRef:
               name: {{ include "naver-hkt.name" . }}-config
-              key: DATABASE_URL
+              key: SPRING_DATASOURCE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: SPRING_DATASOURCE_PASSWORD
         - name: MINIO_URL
           valueFrom:
             configMapKeyRef:
               name: {{ include "naver-hkt.name" . }}-config
               key: MINIO_URL
-        - name: MINIO_ROOT_USER
+        - name: MINIO_ACCESS_KEY
           valueFrom:
             secretKeyRef:
               name: {{ include "naver-hkt.name" . }}-secrets
-              key: MINIO_USER
-        - name: MINIO_ROOT_PASSWORD
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: {{ include "naver-hkt.name" . }}-secrets
-              key: MINIO_PASSWORD
-        - name: BASE_URL
+              key: MINIO_SECRET_KEY
+        - name: MINIO_BUCKET_NAME
           valueFrom:
             configMapKeyRef:
               name: {{ include "naver-hkt.name" . }}-config
-              key: BASE_URL
-        - name: GOOGLE_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "naver-hkt.name" . }}-secrets
-              key: GOOGLE_CLIENT_ID
-        - name: GOOGLE_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "naver-hkt.name" . }}-secrets
-              key: GOOGLE_CLIENT_SECRET
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "naver-hkt.name" . }}-secrets
-              key: SECRET_KEY
-        - name: REDIS_URL
+              key: MINIO_BUCKET_NAME
+        - name: AI_GATEWAY_URL
           valueFrom:
             configMapKeyRef:
               name: {{ include "naver-hkt.name" . }}-config
-              key: REDIS_URL
-        - name: REDIS_SESSION_URL
+              key: AI_GATEWAY_URL
+        - name: JWT_SECRET
           valueFrom:
-            configMapKeyRef:
-              name: {{ include "naver-hkt.name" . }}-config
-              key: REDIS_SESSION_URL
+            secretKeyRef:
+              name: {{ include "naver-hkt.name" . }}-secrets
+              key: JWT_SECRET
         resources:
           {{- toYaml .Values.backend.resources | nindent 10 }}
         livenessProbe:

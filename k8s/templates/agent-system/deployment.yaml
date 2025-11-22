@@ -27,31 +27,16 @@ spec:
         - containerPort: {{ .Values.agentSystem.service.port }}
           name: http
         env:
-        - name: LANGFUSE_PUBLIC_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "naver-hkt.name" . }}-secrets
-              key: LANGFUSE_PUBLIC_KEY
-        - name: LANGFUSE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "naver-hkt.name" . }}-secrets
-              key: LANGFUSE_SECRET_KEY
-        - name: LANGFUSE_HOST
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "naver-hkt.name" . }}-secrets
-              key: LANGFUSE_HOST
         - name: CLOVASTUDIO_API_KEY
           valueFrom:
             secretKeyRef:
               name: {{ include "naver-hkt.name" . }}-secrets
               key: CLOVASTUDIO_API_KEY
-        - name: MINIO_ENDPOINT
+        - name: MINIO_URL
           valueFrom:
             configMapKeyRef:
               name: {{ include "naver-hkt.name" . }}-config
-              key: MINIO_ENDPOINT
+              key: MINIO_URL
         - name: MINIO_ACCESS_KEY
           valueFrom:
             secretKeyRef:

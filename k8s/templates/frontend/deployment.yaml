@@ -26,14 +26,6 @@ spec:
         ports:
         - containerPort: {{ .Values.frontend.service.port }}
           name: http
-        env:
-        - name: VITE_API_URL
-          value: "http://{{ include "naver-hkt.name" . }}-backend:{{ .Values.backend.service.port }}"
-        - name: VITE_BASE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: {{ include "naver-hkt.name" . }}-config
-              key: BASE_URL
         resources:
           {{- toYaml .Values.frontend.resources | nindent 10 }}
         livenessProbe:

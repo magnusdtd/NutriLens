@@ -60,10 +60,10 @@ Get the database URL
 {{- end }}
 
 {{/*
-Get the Redis URL
+Get the Spring datasource URL (JDBC format)
 */}}
-{{- define "naver-hkt.redisUrl" -}}
-{{- printf "redis://%s:%s/0" (printf "%s-redis" (include "naver-hkt.name" .)) (.Values.redis.service.port | toString) }}
+{{- define "naver-hkt.springDatasourceUrl" -}}
+{{- printf "jdbc:postgresql://%s:%s/%s" (printf "%s-database" (include "naver-hkt.name" .)) (.Values.database.service.port | toString) .Values.database.auth.database }}
 {{- end }}
 
 {{/*
@@ -71,11 +71,15 @@ Get the MinIO URL
 */}}
 {{- define "naver-hkt.minioUrl" -}}
 {{- printf "http://%s:%s" (printf "%s-minio" (include "naver-hkt.name" .)) (.Values.minio.service.apiPort | toString) }}
-{{- end }} 
+{{- end }}
 
 {{/*
-Get the Redis Session URL
+Get the AI Gateway URL
 */}}
-{{- define "naver-hkt.redisSessionUrl" -}}
-{{- printf "redis://%s-redis-session:%s/0" (include "naver-hkt.name" .) (.Values.redisSession.service.port | toString) }}
+{{- define "naver-hkt.aiGatewayUrl" -}}
+{{- if and .Values.backend.env .Values.backend.env.AI_GATEWAY_URL }}
+{{- .Values.backend.env.AI_GATEWAY_URL }}
+{{- else }}
+{{- printf "http://%s:%s" (printf "%s-agent-system" (include "naver-hkt.name" .)) (.Values.agentSystem.service.port | toString) }}
+{{- end }}
 {{- end }}

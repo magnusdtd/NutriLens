@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "naver-hkt.labels" . | nindent 4 }}
 data:
-  BASE_URL: {{ .Values.backend.env.BASE_URL | quote }}
-  DATABASE_URL: {{ include "naver-hkt.databaseUrl" . | quote }}
+  SPRING_DATASOURCE_URL: {{ include "naver-hkt.springDatasourceUrl" . | quote }}
   MINIO_URL: {{ include "naver-hkt.minioUrl" . | quote }}
-  MINIO_ENDPOINT: {{ include "naver-hkt.minioUrl" . | quote }}
+  MINIO_BUCKET_NAME: {{ .Values.backend.env.MINIO_BUCKET_NAME | quote }}
+  AI_GATEWAY_URL: {{ include "naver-hkt.aiGatewayUrl" . | quote }}

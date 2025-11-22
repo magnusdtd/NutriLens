@@ -20,7 +20,7 @@ backend:
     pullPolicy: Always
   service:
     type: ClusterIP
-    port: 8080
+    port: 8082
   resources:
     requests:
       cpu: 500m
@@ -29,7 +29,8 @@ backend:
       cpu: 2000m
       memory: 8Gi
   env:
-    BASE_URL: "https://naver-hkt-synapsex.duckdns.org"
+    MINIO_BUCKET_NAME: "images"
+    AI_GATEWAY_URL: "http://naver-hkt-agent-system:8000"
 
 # Frontend (React) configuration
 frontend:
@@ -59,7 +60,7 @@ database:
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 6543
+    port: 5432
   resources:
     requests:
       cpu: 500m
@@ -126,16 +127,17 @@ secrets:
   googleClientId: "googleClientId"
   googleClientSecret: "googleClientSecret"
   secretKey: "this_is_a_secret_key"
+  jwtSecret: "this_is_a_jwt_secret_key"
   dbUser: "user"
   dbPassword: "password"
   minioUser: "minioadmin"
   minioPassword: "minioadmin"
-  langfusePublicKey: "langfusePublicKey"
-  langfuseSecretKey: "langfuseSecretKey"
-  langfuseHost: "langfuseHost"
   clovastudioApiKey: "clovastudioApiKey"
   clovaOcrSecret: "clovaOcrSecret"
 
 # Ingress configuration
 ingress:
-  enabled: false 
+  enabled: false
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" 
