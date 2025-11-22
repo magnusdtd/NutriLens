@@ -21,6 +21,7 @@ public class ChatTitleServiceImpl implements ChatTitleService {
     private final ConversationRepository conversationRepository;
     private static final String DEFAULT_MODEL = "HCX-005";
 
+
     public ChatTitleServiceImpl(AiGatewayService aiGatewayService, ConversationRepository conversationRepository) {
         this.aiGatewayService = aiGatewayService;
         this.conversationRepository = conversationRepository;
@@ -35,8 +36,11 @@ public class ChatTitleServiceImpl implements ChatTitleService {
                     Message: "%s"
                     """, userMessage);
 
-            AiChatRequest titleRequest = new AiChatRequest(conversation.getUser().getId(), titlePrompt, List.of()
-            );
+            AiChatRequest titleRequest = AiChatRequest.builder()
+                    .userId(conversation.getUser().getId().toString())
+                    .message(titlePrompt)
+                    .history(List.of())
+                    .build();
 
             AiChatResponse titleResponse = aiGatewayService.getChatReplyFromAgent(titleRequest);
             String generatedTitle = titleResponse.getReply().replaceAll("[\"\\n\\.]", "").trim();

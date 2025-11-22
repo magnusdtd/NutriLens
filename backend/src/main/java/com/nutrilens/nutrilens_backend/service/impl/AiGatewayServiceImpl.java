@@ -41,8 +41,6 @@ public class AiGatewayServiceImpl implements AiGatewayService {
 
     @Override
     public VisionAnalyzeResponseDTO analyzeImage(MultipartFile imageFile) {
-        // Tương lai: Xây dựng multipart request và gọi đến /api/predict_img của AI Gateway
-        // Hiện tại: Logic này sẽ được đặt trong VisionService, đây chỉ là placeholder
         log.info("Sending image to AI Gateway (/api/predict_img)");
         throw new UnsupportedOperationException("AI Gateway call for image analysis is not implemented yet.");
     }

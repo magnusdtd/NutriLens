@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
@@ -18,8 +19,6 @@ public class UserDetailDto {
 
     private String username;
 
-    private String name;
-
     private Integer age;
 
     private String gender;
@@ -28,8 +27,13 @@ public class UserDetailDto {
 
     private Double weight; // kg
 
-    private String goals;
+    private Integer calorieGoal;
 
     private String specialDiet;
+
+    private LocalDate createdAt;
+
+    private String cuisine;
+
 }
 

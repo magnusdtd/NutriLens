@@ -32,4 +32,8 @@ public class Message extends Auditable {
 
     @Column(name = "message", columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "image_id", referencedColumnName = "id")
+    private Image image;
 }

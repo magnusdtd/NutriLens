@@ -1,8 +1,8 @@
 package com.nutrilens.nutrilens_backend.controller;
 
-import com.nutrilens.nutrilens_backend.common.dto.AuthenticationResponse;
-import com.nutrilens.nutrilens_backend.common.dto.LoginRequest;
-import com.nutrilens.nutrilens_backend.common.dto.RegisterRequest;
+import com.nutrilens.nutrilens_backend.common.dto.auth.AuthenticationResponse;
+import com.nutrilens.nutrilens_backend.common.dto.auth.LoginRequest;
+import com.nutrilens.nutrilens_backend.common.dto.auth.RegisterRequest;
 import com.nutrilens.nutrilens_backend.service.AuthenticationService;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;

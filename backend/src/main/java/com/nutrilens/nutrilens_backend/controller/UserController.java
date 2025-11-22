@@ -1,6 +1,6 @@
 package com.nutrilens.nutrilens_backend.controller;
 
-import com.nutrilens.nutrilens_backend.common.dto.UserDetailDto;
+import com.nutrilens.nutrilens_backend.common.dto.user.UserDetailDto;
 import com.nutrilens.nutrilens_backend.common.dto.user.UserProfileRequestDTO;
 import com.nutrilens.nutrilens_backend.service.UserService;
 import com.nutrilens.nutrilens_backend.utils.SecurityUtil;

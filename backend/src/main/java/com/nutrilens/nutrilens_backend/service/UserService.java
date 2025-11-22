@@ -1,7 +1,7 @@
 package com.nutrilens.nutrilens_backend.service;
 
 
-import com.nutrilens.nutrilens_backend.common.dto.UserDetailDto;
+import com.nutrilens.nutrilens_backend.common.dto.user.UserDetailDto;
 import com.nutrilens.nutrilens_backend.common.dto.user.UserProfileRequestDTO;
 
 import java.util.UUID;
