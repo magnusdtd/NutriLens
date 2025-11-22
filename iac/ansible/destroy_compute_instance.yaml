@@ -1,9 +1,9 @@
 - name: Destroy Compute Engine instance and related resources
   hosts: localhost
   vars:
-    project_id: aic-hcmus-2025
+    project_id: feisty-legend-478903-c2
     zone: asia-southeast1-a
-    credentials_file: ./../secrets/aic-hcmus-2025-c3dca18c8b8a.json
+    credentials_file: ./../secrets/service-account.json
     instance_name: jenkins-server
     disk_name: disk-instance
     network_name: default

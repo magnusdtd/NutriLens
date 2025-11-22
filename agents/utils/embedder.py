@@ -7,6 +7,8 @@ from transformers import AutoTokenizer
 import onnxruntime as ort
 from .mlflow_client import MLFlow
 import os
+from huggingface_hub import hf_hub_download
+import shutil
 
 class Embedder:
     """
@@ -16,7 +18,7 @@ class Embedder:
     def __init__(
         self,
         model_name: str = "intfloat/multilingual-e5-small",
-        local_model_path: str = "../checkpoints/onnx/model.onnx"
+        local_model_path: str = "checkpoints/onnx/model.onnx"
     ):
         self.model_name = model_name
         self.local_model_path = local_model_path
@@ -24,7 +26,21 @@ class Embedder:
         self.mlflow_model_uri = os.environ.get("EMBEDDER_MLFLOW_URI") # "models:/intfloat_multilingual-e5-small_onnx_model/1"
 
         self.mlflow_client = MLFlow()
-        self.mlflow_client.load_onnx_model(self.local_model_path, self.mlflow_model_uri)
+        try:
+            self.mlflow_client.load_onnx_model(self.local_model_path, self.mlflow_model_uri)
+        except Exception as e:
+            print(f"MLFlow model loading failed: {e}")
+            print("Falling back to downloading model from Huggingface Hub...")
+            # Download model.onnx from Huggingface
+            model_onnx_path = hf_hub_download(
+                repo_id=self.model_name,
+                filename="onnx/model.onnx",
+                cache_dir=os.path.dirname(self.local_model_path),
+                resume_download=True,
+            )
+            # Save/copy the model to local_model_path if not already present
+            if model_onnx_path != self.local_model_path:
+                shutil.copyfile(model_onnx_path, self.local_model_path)
         self.session = ort.InferenceSession(self.local_model_path)
     
     @staticmethod

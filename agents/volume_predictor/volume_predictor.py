@@ -10,6 +10,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.mlflow_client import MLFlow
 import os
+from huggingface_hub import hf_hub_download
+import shutil
 
 class VolumePredictor:
     def __init__(
@@ -23,8 +25,40 @@ class VolumePredictor:
         iou = 0.7
     ):
         self.mlflow_client = MLFlow()
-        self.mlflow_client.load_onnx_model(yolo_path, os.environ.get("YOLO_MLFLOW_URI"))
-        self.mlflow_client.load_torch_model(dav2_path, os.environ.get("DAMv2_MLFLOW_URI"))
+        try:
+            self.mlflow_client.load_onnx_model(yolo_path, os.environ.get("YOLO_MLFLOW_URI"))
+            self.mlflow_client.load_torch_model(dav2_path, os.environ.get("DAMv2_MLFLOW_URI"))
+        except Exception as e:
+            print(f"MLFlow model loading failed: {e}")
+            print("Falling back to downloading models from Hugging Face Hub...")
+
+            # ---- Download YOLO ONNX Model ----
+            try:
+                yolo_model_onnx_path = hf_hub_download(
+                    repo_id="magnusdtd/yolov8-foodseg103",  # Example repo, update as needed
+                    filename="yolov8_foodseg103.onnx",
+                    cache_dir=os.path.dirname(yolo_path),
+                    resume_download=True,
+                )
+                if yolo_model_onnx_path != yolo_path:
+                    shutil.copyfile(yolo_model_onnx_path, yolo_path)
+                print(f"Downloaded YOLOv8 food segmentation model to {yolo_path}")
+            except Exception as yolo_dl_ex:
+                print(f"Failed to download YOLOv8 model from Huggingface: {yolo_dl_ex}")
+
+            # ---- Download DepthAnyThing v2 Torch Model ----
+            try:
+                dav2_model_torch_path = hf_hub_download(
+                    repo_id="depth-anything/Depth-Anything-V2-Metric-Hypersim-Small",
+                    filename="depth_anything_v2_metric_hypersim_vits.pth",
+                    cache_dir=os.path.dirname(dav2_path),
+                    resume_download=True,
+                )
+                if dav2_model_torch_path != dav2_path:
+                    shutil.copyfile(dav2_model_torch_path, dav2_path)
+                print(f"Downloaded DepthAnyThing v2 (vits) model to {dav2_path}")
+            except Exception as dav2_dl_ex:
+                print(f"Failed to download DepthAnyThing v2 model from Huggingface: {dav2_dl_ex}")
 
         self.depth_estimator = DepthEstimator(dav2_path, model_type=dav2_type)
         self.pc_generator = PointCloudGenerator(focal_length_x, focal_length_y)

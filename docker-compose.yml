@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "6543:6543"
+      - "6543:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U user -d mydatabase" ]
       interval: 10s
@@ -37,7 +37,7 @@ services:
     build:
       context: agents/
       dockerfile: Dockerfile
-    image: magnusdtd/naver-hackathoon-agent
+    image: magnusdtd/naver-hkt-agent
     ports:
       - "8000:8000"
     depends_on:
@@ -45,8 +45,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    volumes:
-      - ./agents/chroma_db:/app/chroma_db
     environment:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
@@ -57,6 +55,7 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       CLOVA_OCR_SECRET: ${CLOVA_OCR_SECRET}
       DATABASE_URL: ${DATABASE_URL}
+      MLFLOW_URI: ${MLFLOW_URI}
 
 volumes:
   postgres_data:

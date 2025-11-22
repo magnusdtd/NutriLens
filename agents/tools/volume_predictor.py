@@ -46,8 +46,8 @@ def predict_volume_tool(image_id: str) -> dict:
     # 3. Load and run the VolumePredictor
     try:
         predictor = VolumePredictor(
-            yolo_path=str(Path(__file__).parent.parent / "checkpoints/yolov8_foodseg103.onnx"),
-            dav2_path=str(Path(__file__).parent.parent / "checkpoints/depth_anything_v2_metric_hypersim_vits.pth"),
+            yolo_path=str(Path(__file__).parent / "checkpoints/yolov8_foodseg103.onnx"),
+            dav2_path=str(Path(__file__).parent / "checkpoints/depth_anything_v2_metric_hypersim_vits.pth"),
             dav2_type="vits"
         )
         prediction_result = predictor.predict(image_stream)

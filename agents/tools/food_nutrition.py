@@ -2,10 +2,16 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 from langchain.tools import tool
-
-from utils.ingest_data import get_or_create_collection
+import chromadb
 from utils.embedder import Embedder
 
+def get_or_create_collection(persist_directory: str, collection_name: str):
+    client = chromadb.PersistentClient(path=persist_directory)
+    try:
+        collection = client.get_collection(collection_name)
+    except Exception:
+        collection = client.create_collection(collection_name)
+    return collection
 @dataclass
 class SearchResult:
     title: str

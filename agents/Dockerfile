@@ -26,5 +26,7 @@ RUN groupadd -g 1001 appgroup && \
 WORKDIR /app
 COPY --from=build --chown=appuser:appgroup /app .
 
+# RUN chmod -R ug+w /app
+
 USER appuser
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

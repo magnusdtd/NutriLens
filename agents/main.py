@@ -68,7 +68,12 @@ async def predict_img(
     except Exception as minio_err:
         raise HTTPException(status_code=500, detail=f"Error retrieving image from MinIO: {str(minio_err)}")
 
-    return StreamingResponse(image_stream, media_type="image/jpeg")
+    # return StreamingResponse(image_stream, media_type="image/jpeg")
+
+    return { 
+        "predictions": ["grilled chicken breast", "brown rice", "steamed broccoli"], 
+        "nutritional_info": { "calories": 450, "protein": 45, "carbs": 38, "fat": 8 } 
+    }
 
 
 class ChatRequest(BaseModel):
@@ -90,4 +95,4 @@ async def chat_completion(payload: ChatRequest):
     )
 
     langfuse.flush()
-    return {"reply": result.get("response"), "details": result}
+    return {"reply": result.get("response"), "chat_name": "Healthy Meal"}
