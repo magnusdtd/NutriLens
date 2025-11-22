@@ -13,6 +13,11 @@ clean:
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@find . -type f -name "*.pyc" -delete
 
+ # Start Multi-agent System
+.PHONY: build
+build:
+	@echo "Build all the images"
+	@docker compose -f docker-compose.yml build
 
  # Start Multi-agent System
 .PHONY: multi-agent-system-up

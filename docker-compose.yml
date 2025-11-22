@@ -64,8 +64,6 @@ services:
     image: magnusdtd/naver-hackathon-frontend
     ports:
       - "8070:8070"
-    networks:
-      - app_network
 
 
 volumes:

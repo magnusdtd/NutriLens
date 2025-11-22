@@ -10,10 +10,12 @@ pipeline {
     // Docker image names for the three services
     BACKEND_IMAGE = 'magnusdtd/naver-hkt-backend'
     FRONTEND_IMAGE = 'magnusdtd/naver-hkt-frontend'
+    AGENT_SYSTEM_IMAGE = 'magnusdtd/naver-hkt-agent-system'
     
     // Full image names with latest tag
     BACKEND_FULL_IMAGE = "${BACKEND_IMAGE}:latest"
     FRONTEND_FULL_IMAGE = "${FRONTEND_IMAGE}:latest"
+    AGENT_SYSTEM_FULL_IMAGE = "${AGENT_SYSTEM_IMAGE}:latest"
     
     DOCKER_REGISTRY_CREDENTIAL = 'dockerhub'
     
@@ -23,6 +25,11 @@ pipeline {
     SECRET_KEY_CREDENTIAL = 'secret-key'
     DB_PASSWORD_CREDENTIAL = 'db-password'
     MINIO_PASSWORD_CREDENTIAL = 'minio-password'
+    LANGFUSE_PUBLIC_KEY_CREDENTIAL = 'langfuse-public-key'
+    LANGFUSE_SECRET_KEY_CREDENTIAL = 'langfuse-secret-key'
+    LANGFUSE_HOST_CREDENTIAL = 'langfuse-host'
+    CLOVASTUDIO_API_KEY_CREDENTIAL = 'clovastudio-api-key'
+    CLOVA_OCR_SECRET_CREDENTIAL = 'clova-ocr-secret'
   }
 
   stages {
@@ -57,12 +64,15 @@ pipeline {
           docker.withRegistry('', DOCKER_REGISTRY_CREDENTIAL) {
             // Push backend image
             echo "Pushing ${BACKEND_FULL_IMAGE}..."
-            docker.image("${BACKEND_FULL_IMAGE}").push()
+            // docker.image("${BACKEND_FULL_IMAGE}").push()
             
             // Push frontend image
             echo "Pushing ${FRONTEND_FULL_IMAGE}..."
             docker.image("${FRONTEND_FULL_IMAGE}").push()
             
+            // Push agent-system image
+            echo "Pushing ${AGENT_SYSTEM_FULL_IMAGE}..."
+            docker.image("${AGENT_SYSTEM_FULL_IMAGE}").push()
           }
 
           echo 'All Docker images pushed successfully!'
@@ -96,7 +106,12 @@ pipeline {
               string(credentialsId: env.GOOGLE_CLIENT_SECRET_CREDENTIAL, variable: 'GOOGLE_CLIENT_SECRET'),
               string(credentialsId: env.SECRET_KEY_CREDENTIAL, variable: 'SECRET_KEY'),
               string(credentialsId: env.DB_PASSWORD_CREDENTIAL, variable: 'DB_PASSWORD'),
-              string(credentialsId: env.MINIO_PASSWORD_CREDENTIAL, variable: 'MINIO_PASSWORD')
+              string(credentialsId: env.MINIO_PASSWORD_CREDENTIAL, variable: 'MINIO_PASSWORD'),
+              string(credentialsId: env.LANGFUSE_PUBLIC_KEY_CREDENTIAL, variable: 'LANGFUSE_PUBLIC_KEY'),
+              string(credentialsId: env.LANGFUSE_SECRET_KEY_CREDENTIAL, variable: 'LANGFUSE_SECRET_KEY'),
+              string(credentialsId: env.LANGFUSE_HOST_CREDENTIAL, variable: 'LANGFUSE_HOST'),
+              string(credentialsId: env.CLOVASTUDIO_API_KEY_CREDENTIAL, variable: 'CLOVASTUDIO_API_KEY'),
+              string(credentialsId: env.CLOVA_OCR_SECRET_CREDENTIAL, variable: 'CLOVA_OCR_SECRET')
             ]) {
               
               // Store credentials in environment variables for later stages
@@ -105,6 +120,11 @@ pipeline {
               env.SECRET_KEY = SECRET_KEY
               env.DB_PASSWORD = DB_PASSWORD
               env.MINIO_PASSWORD = MINIO_PASSWORD
+              env.LANGFUSE_PUBLIC_KEY = LANGFUSE_PUBLIC_KEY
+              env.LANGFUSE_SECRET_KEY = LANGFUSE_SECRET_KEY
+              env.LANGFUSE_HOST = LANGFUSE_HOST
+              env.CLOVASTUDIO_API_KEY = CLOVASTUDIO_API_KEY
+              env.CLOVA_OCR_SECRET = CLOVA_OCR_SECRET
               env.NAMESPACE = 'naver-hkt-app'
 
             sh '''
@@ -121,6 +141,11 @@ pipeline {
                 --set secrets.secretKey="${SECRET_KEY}" \
                 --set secrets.dbPassword="${DB_PASSWORD}" \
                 --set secrets.minioPassword="${MINIO_PASSWORD}" \
+                --set secrets.langfusePublicKey="${LANGFUSE_PUBLIC_KEY}" \
+                --set secrets.langfuseSecretKey="${LANGFUSE_SECRET_KEY}" \
+                --set secrets.langfuseHost="${LANGFUSE_HOST}" \
+                --set secrets.clovastudioApiKey="${CLOVASTUDIO_API_KEY}" \
+                --set secrets.clovaOcrSecret="${CLOVA_OCR_SECRET}" \
                 --wait \
                 --timeout 10m
               
