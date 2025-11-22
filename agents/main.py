@@ -49,24 +49,24 @@ async def predict_img(
 ):
     from utils.minio_client import minio_client
 
-    # 1. Retrieve image metadata from Postgres
-    with Session(engine) as session:
-        try:
-            stmt = select(Image).where(Image.id == image_id)
-            image_obj = session.exec(stmt).first()
-            if not image_obj:
-                raise HTTPException(status_code=404, detail=f"Image not found for the provided image_id: {image_id}")
-        except Exception as db_err:
-            raise HTTPException(status_code=500, detail=f"Database error while retrieving image: {str(db_err)}")
+    # # 1. Retrieve image metadata from Postgres
+    # with Session(engine) as session:
+    #     try:
+    #         stmt = select(Image).where(Image.id == image_id)
+    #         image_obj = session.exec(stmt).first()
+    #         if not image_obj:
+    #             raise HTTPException(status_code=404, detail=f"Image not found for the provided image_id: {image_id}")
+    #     except Exception as db_err:
+    #         raise HTTPException(status_code=500, detail=f"Database error while retrieving image: {str(db_err)}")
 
-    # 2. Retrieve image file from MinIO
-    try:
-        image_stream = minio_client.get_image(
-            file_name=image_obj.file_name,
-            bucket_name=image_obj.bucket
-        )
-    except Exception as minio_err:
-        raise HTTPException(status_code=500, detail=f"Error retrieving image from MinIO: {str(minio_err)}")
+    # # 2. Retrieve image file from MinIO
+    # try:
+    #     image_stream = minio_client.get_image(
+    #         file_name=image_obj.file_name,
+    #         bucket_name=image_obj.bucket
+    #     )
+    # except Exception as minio_err:
+    #     raise HTTPException(status_code=500, detail=f"Error retrieving image from MinIO: {str(minio_err)}")
 
     # return StreamingResponse(image_stream, media_type="image/jpeg")
 
@@ -98,10 +98,10 @@ async def chat_completion(payload: ChatRequest):
             "system",
             "You are a helpful assistant that translates English to Korean. Translate the user sentence.",
         ),
-        ("human", "I love using NAVER AI."),
+        ("human", payload.message),
     ]
 
     result = chat.invoke(messages)
 
     langfuse.flush()
-    return {"reply": result.get("response"), "chat_name": "Healthy Meal"}
+    return {"reply": result.content, "chat_name": "Healthy Meal"}
