@@ -106,7 +106,8 @@ pipeline {
           container('helm') {
             // Load sensitive data from Jenkins credentials
             withCredentials([
-              googleServiceAccountKey(credentialsId: 'GCP', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
+              // googleServiceAccountKey(credentialsId: 'GCP', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
+              file(credentialsId: 'GCP', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
               string(credentialsId: env.GOOGLE_CLIENT_ID_CREDENTIAL, variable: 'GOOGLE_CLIENT_ID'),
               string(credentialsId: env.GOOGLE_CLIENT_SECRET_CREDENTIAL, variable: 'GOOGLE_CLIENT_SECRET'),
               string(credentialsId: env.SECRET_KEY_CREDENTIAL, variable: 'SECRET_KEY'),
@@ -133,7 +134,7 @@ pipeline {
               env.CLOVA_OCR_SECRET = CLOVA_OCR_SECRET
               env.NAMESPACE = 'naver-hkt-app'
               env.KUBECONFIG = "/tmp/kubeconfig"
-              
+
               sh "gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}"
               sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE} --project ${GCP_PROJECT_ID}"
 
