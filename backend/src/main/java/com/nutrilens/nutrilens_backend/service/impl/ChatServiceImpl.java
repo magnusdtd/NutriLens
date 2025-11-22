@@ -2,12 +2,13 @@ package com.nutrilens.nutrilens_backend.service.impl;
 
 import com.nutrilens.nutrilens_backend.common.dto.ai.AiChatRequest;
 import com.nutrilens.nutrilens_backend.common.dto.ai.AiChatResponse;
-import com.nutrilens.nutrilens_backend.common.dto.chat.ChatRequestDTO;
-import com.nutrilens.nutrilens_backend.common.dto.chat.ChatResponseDTO;
+import com.nutrilens.nutrilens_backend.common.dto.chat.*;
 import com.nutrilens.nutrilens_backend.common.entity.Conversation;
 import com.nutrilens.nutrilens_backend.common.entity.Image;
 import com.nutrilens.nutrilens_backend.common.entity.Message;
 import com.nutrilens.nutrilens_backend.common.entity.User;
+import com.nutrilens.nutrilens_backend.converter.ConversationConverter;
+import com.nutrilens.nutrilens_backend.converter.MessageConverter;
 import com.nutrilens.nutrilens_backend.repository.ConversationRepository;
 import com.nutrilens.nutrilens_backend.repository.ImageRepository;
 import com.nutrilens.nutrilens_backend.repository.MessageRepository;
@@ -19,6 +20,7 @@ import com.nutrilens.nutrilens_backend.service.MinioService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,6 +43,8 @@ public class ChatServiceImpl implements ChatService {
     private final AiGatewayService aiGatewayService;
     private final MinioService minioService;
     private final ImageRepository imageRepository;
+    private final ConversationConverter conversationConverter;
+    private final MessageConverter messageConverter;
 
     @Override
     public ChatResponseDTO processChat(UUID userId, UUID conversationId, String messageContent, MultipartFile imageFile) {
@@ -93,6 +97,36 @@ public class ChatServiceImpl implements ChatService {
 
         return new ChatResponseDTO(conversation.getId(), replyContent, conversation.getChatName());
 
+    }
+
+    @Override
+    public List<ConversationPreviewDTO> getUserConversations(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Conversation> conversations = conversationRepository.findByUser_IdOrderByCreatedAtDesc(user.getId());
+
+        return conversations.stream()
+                .map(conversationConverter::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ConversationDetailDTO getConversationDetail(UUID conversationId, String email) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+
+        if (!conversation.getUser().getEmail().equals(email)) {
+            throw new AccessDeniedException("You do not have permission to access this conversation");
+        }
+        List<Message> messages = messageRepository.findByConversation_IdOrderByTimestampAsc(conversationId);
+
+        List<MessageDTO> messageDTOs = messages.stream().map(messageConverter::convertToDTO).toList();
+        return ConversationDetailDTO.builder()
+                .id(conversation.getId())
+                .chatName(conversation.getChatName())
+                .messages(messageDTOs)
+                .build();
     }
 
 

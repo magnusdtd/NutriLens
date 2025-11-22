@@ -35,9 +35,8 @@ public class VisionServiceImpl implements VisionService {
     public VisionAnalyzeResponseDTO analyzeImage(MultipartFile imageFile) {
         log.info("Starting image analysis process...");
 
-        // 1. Lấy thông tin User hiện tại (từ Security Context)
         String username = SecurityUtil.getUsername();
-        User user = userRepository.findByEmail(username) // SecurityUtil trả về email
+        User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String fileName = minioService.uploadImage(imageFile);
