@@ -132,7 +132,8 @@ pipeline {
               env.CLOVASTUDIO_API_KEY = CLOVASTUDIO_API_KEY
               env.CLOVA_OCR_SECRET = CLOVA_OCR_SECRET
               env.NAMESPACE = 'naver-hkt-app'
-
+              env.KUBECONFIG = "/tmp/kubeconfig"
+              
               sh "gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}"
               sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE} --project ${GCP_PROJECT_ID}"
 
