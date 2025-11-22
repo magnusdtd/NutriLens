@@ -1,0 +1,20 @@
+{{- if .Values.database.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "naver-hkt.name" . }}-database
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "naver-hkt.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  type: {{ .Values.database.service.type }}
+  ports:
+  - port: {{ .Values.database.service.port }}
+    targetPort: 5432
+    protocol: TCP
+    name: postgresql
+  selector:
+    {{- include "naver-hkt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+{{- end }} 
