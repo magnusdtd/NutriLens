@@ -8,13 +8,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 @Data
 @Entity
 @Table(name = "users")
-public class User implements Serializable {
+public class User extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,9 +29,6 @@ public class User implements Serializable {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "name")
-    private String name;
-
     @Column(name = "age")
     private Integer age;
 
@@ -45,10 +41,13 @@ public class User implements Serializable {
     @Column(name = "weight")
     private Double weight; // (kg)
 
-    @Column(name = "goals", columnDefinition = "TEXT")
-    private String goals;
+    @Column(name = "calorie_goal", columnDefinition = "TEXT")
+    private Integer calorieGoal;
 
     @Column(name = "special_diet", columnDefinition = "TEXT")
     private String specialDiet;
+
+    @Column(name = "Cuisine")
+    private String cuisine;
 
 }

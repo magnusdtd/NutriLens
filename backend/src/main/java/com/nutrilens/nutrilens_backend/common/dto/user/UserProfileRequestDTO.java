@@ -5,11 +5,12 @@ import lombok.Data;
 
 @Data
 public class UserProfileRequestDTO {
-    private String name;
+    private String username;
     private Integer age;
     private String gender;
     private Double height;
     private Double weight;
-    private String goals;
-    private  String specialDiet;
+    private Integer calorieGoal;
+    private String specialDiet;
+    private String cuisine;
 }

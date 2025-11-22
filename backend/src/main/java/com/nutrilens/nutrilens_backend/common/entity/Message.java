@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "messages")
-public class Message {
+public class Message extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

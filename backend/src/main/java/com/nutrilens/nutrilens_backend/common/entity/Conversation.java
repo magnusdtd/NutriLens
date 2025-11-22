@@ -14,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "conversations")
-public class Conversation {
+public class Conversation extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,10 +26,6 @@ public class Conversation {
 
     @Column(name = "chat_name", nullable = false)
     private String chatName;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
 
     @Column(name = "summary", columnDefinition = "TEXT")
     private String summary;

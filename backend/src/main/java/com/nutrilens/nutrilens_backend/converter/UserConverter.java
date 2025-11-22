@@ -1,6 +1,6 @@
 package com.nutrilens.nutrilens_backend.converter;
 
-import com.nutrilens.nutrilens_backend.common.dto.user.UserDetailDto;
+import com.nutrilens.nutrilens_backend.common.dto.UserDetailDto;
 
 import com.nutrilens.nutrilens_backend.common.entity.User;
 import org.modelmapper.ModelMapper;

@@ -26,9 +26,9 @@ public class JwtServiceImpl implements JwtService {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String email) {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -47,10 +47,8 @@ public class JwtServiceImpl implements JwtService {
         return extractClaims(token).getSubject();
     }
 
-    public boolean validateToken(String username, UserDetails userDetails, String token) {
-        //TODO - check if username is same as username in userDetails
-        //TODO - check if token is not expired
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    public boolean validateToken(String emailInToken, UserDetails userDetails, String token) {
+        return emailInToken.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     public boolean isTokenExpired(String token) {

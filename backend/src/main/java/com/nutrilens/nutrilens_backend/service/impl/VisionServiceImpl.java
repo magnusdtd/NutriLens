@@ -3,6 +3,7 @@ package com.nutrilens.nutrilens_backend.service.impl;
 import com.nutrilens.nutrilens_backend.common.dto.vision.VisionAnalyzeResponseDTO;
 import com.nutrilens.nutrilens_backend.service.AiGatewayService;
 import com.nutrilens.nutrilens_backend.service.VisionService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;

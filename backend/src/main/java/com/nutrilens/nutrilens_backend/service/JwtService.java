@@ -4,7 +4,7 @@ import io.jsonwebtoken.Claims;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public interface JwtService {
-    String generateToken(String username);
+    String generateToken(String email);
 
     Claims extractClaims(String token);
 

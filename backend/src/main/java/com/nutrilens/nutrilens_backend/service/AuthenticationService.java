@@ -1,8 +1,8 @@
 package com.nutrilens.nutrilens_backend.service;
 
-import com.nutrilens.nutrilens_backend.common.dto.auth.LoginRequest;
-import com.nutrilens.nutrilens_backend.common.dto.auth.AuthenticationResponse;
-import com.nutrilens.nutrilens_backend.common.dto.auth.RegisterRequest;
+import com.nutrilens.nutrilens_backend.common.dto.LoginRequest;
+import com.nutrilens.nutrilens_backend.common.dto.AuthenticationResponse;
+import com.nutrilens.nutrilens_backend.common.dto.RegisterRequest;
 import jakarta.validation.Valid;
 
 public interface AuthenticationService {
