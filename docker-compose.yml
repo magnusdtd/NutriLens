@@ -61,7 +61,7 @@ services:
     build:
       context: ./frontend/
       dockerfile: ./Dockerfile
-    image: magnusdtd/naver-hackathon-frontend
+    image: magnusdtd/naver-hkt-frontend
     ports:
       - "8070:8070"
 
