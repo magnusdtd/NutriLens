@@ -1,0 +1,116 @@
+services:
+  minio:
+    restart: always
+    image: minio/minio
+    container_name: mlflow_s3
+    ports:
+      - "10000:9000"
+      - "10001:9001"
+    command: server /data --console-address ':9001' --address ':9000'
+    env_file:
+      - .env.example
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+    volumes:
+      - mlflow_minio_data:/data
+    networks:
+      - mlflow
+
+  mlflow_mc:
+    image: minio/mc
+    depends_on:
+      - minio
+    container_name: mlflow_mc
+    env_file:
+      - .env.example
+    entrypoint: >
+      /bin/sh -c "
+      chmod +x /tmp/wait-for-it.sh &&
+      /tmp/wait-for-it.sh minio:9000 &&
+      /usr/bin/mc alias set minio http://minio:9000 minio minio123 &&
+      /usr/bin/mc mb minio/mlflow &&
+      /usr/bin/mc mb minio/data &&
+      /usr/bin/mc mb minio/runs;
+      exit 0;
+      "
+    volumes:
+      - ./mlflow/wait-for-it.sh:/tmp/wait-for-it.sh
+    networks:
+      - mlflow
+
+  mlflow_db:
+    restart: always
+    image: mysql:9.2
+    container_name: mlflow_db
+    platform: linux/amd64
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env.example
+    environment:
+      - MYSQL_DATABASE=mlflow_database
+      - MYSQL_USER=mlflow_user
+      - MYSQL_PASSWORD=mlflow
+      - MYSQL_ROOT_PASSWORD=mysql
+    volumes:
+      - mlflow_mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mlflow
+
+  waitfordb:
+    image: busybox
+    depends_on:
+      - mlflow_db
+    command: sh -c "until nc -z mlflow_db 3306; do echo waiting for database; sleep 2; done;"
+    networks:
+      - mlflow
+
+  # Adminer
+  adminer:
+    image: adminer
+    container_name: adminer_mysql
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mlflow_db
+    networks:
+      - mlflow
+
+  mlflow_server:
+    restart: always
+    # Need to build MLflow because the official Docker image does not come with pymysql installed
+    build: ./mlflow
+    image: mlflow
+    container_name: mlflow_server
+    depends_on:
+      - mlflow_mc
+      - mlflow_db
+    ports:
+      - "5002:5000"
+    env_file:
+      - .env.example  
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+    command: >
+      mlflow server
+        --backend-store-uri mysql+pymysql://mlflow_user:mlflow@mlflow_db:3306/mlflow_database
+        --artifacts-destination s3://mlflow
+        --serve-artifacts
+        --host 0.0.0.0
+        --port 5000
+    networks:
+      - mlflow
+
+volumes:
+  mlflow_minio_data:
+  mlflow_mysql_data:
+
+networks:
+  mlflow:
+    name: mlflow
+    driver: bridge
