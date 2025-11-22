@@ -107,7 +107,7 @@ agentSystem:
   enabled: true
   replicaCount: 1
   image:
-    repository: magnusdtd/naver-hkt-agent
+    repository: magnusdtd/naver-hkt-agent-system
     tag: latest
     pullPolicy: Always
   service:
@@ -121,7 +121,6 @@ agentSystem:
       cpu: 2000m
       memory: 4Gi
 
-
 # Secrets configuration (should be overridden with actual production secrets)
 secrets:
   googleClientId: "googleClientId"
@@ -131,8 +130,6 @@ secrets:
   dbPassword: "password"
   minioUser: "minioadmin"
   minioPassword: "minioadmin"
-  
-  # Agent System secrets
   langfusePublicKey: "langfusePublicKey"
   langfuseSecretKey: "langfuseSecretKey"
   langfuseHost: "langfuseHost"

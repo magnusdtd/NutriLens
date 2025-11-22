@@ -30,6 +30,10 @@ pipeline {
     LANGFUSE_HOST_CREDENTIAL = 'langfuse-host'
     CLOVASTUDIO_API_KEY_CREDENTIAL = 'clovastudio-api-key'
     CLOVA_OCR_SECRET_CREDENTIAL = 'clova-ocr-secret'
+
+    GCP_PROJECT_ID = 'feisty-legend-478903-c2'
+    GKE_CLUSTER_NAME = 'feisty-legend-478903-c2-gke'
+    GKE_CLUSTER_ZONE = 'asia-southeast1-a'
   }
 
   stages {
@@ -102,6 +106,7 @@ pipeline {
           container('helm') {
             // Load sensitive data from Jenkins credentials
             withCredentials([
+              googleServiceAccountKey(credentialsId: 'GCP', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
               string(credentialsId: env.GOOGLE_CLIENT_ID_CREDENTIAL, variable: 'GOOGLE_CLIENT_ID'),
               string(credentialsId: env.GOOGLE_CLIENT_SECRET_CREDENTIAL, variable: 'GOOGLE_CLIENT_SECRET'),
               string(credentialsId: env.SECRET_KEY_CREDENTIAL, variable: 'SECRET_KEY'),
@@ -111,7 +116,8 @@ pipeline {
               string(credentialsId: env.LANGFUSE_SECRET_KEY_CREDENTIAL, variable: 'LANGFUSE_SECRET_KEY'),
               string(credentialsId: env.LANGFUSE_HOST_CREDENTIAL, variable: 'LANGFUSE_HOST'),
               string(credentialsId: env.CLOVASTUDIO_API_KEY_CREDENTIAL, variable: 'CLOVASTUDIO_API_KEY'),
-              string(credentialsId: env.CLOVA_OCR_SECRET_CREDENTIAL, variable: 'CLOVA_OCR_SECRET')
+              string(credentialsId: env.CLOVA_OCR_SECRET_CREDENTIAL, variable: 'CLOVA_OCR_SECRET'),
+
             ]) {
               
               // Store credentials in environment variables for later stages
@@ -127,35 +133,39 @@ pipeline {
               env.CLOVA_OCR_SECRET = CLOVA_OCR_SECRET
               env.NAMESPACE = 'naver-hkt-app'
 
-            sh '''
-              echo "Starting Helm deployment..."
-              
-              # Create namespace if it doesn't exist
-              kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
-              
-              # Deploy/Upgrade Helm chart with secrets
-              helm upgrade --install naver-hkt ./k8s \
-                --namespace ${NAMESPACE} \
-                --set secrets.googleClientId="${GOOGLE_CLIENT_ID}" \
-                --set secrets.googleClientSecret="${GOOGLE_CLIENT_SECRET}" \
-                --set secrets.secretKey="${SECRET_KEY}" \
-                --set secrets.dbPassword="${DB_PASSWORD}" \
-                --set secrets.minioPassword="${MINIO_PASSWORD}" \
-                --set secrets.langfusePublicKey="${LANGFUSE_PUBLIC_KEY}" \
-                --set secrets.langfuseSecretKey="${LANGFUSE_SECRET_KEY}" \
-                --set secrets.langfuseHost="${LANGFUSE_HOST}" \
-                --set secrets.clovastudioApiKey="${CLOVASTUDIO_API_KEY}" \
-                --set secrets.clovaOcrSecret="${CLOVA_OCR_SECRET}" \
-                --wait \
-                --timeout 10m
-              
-              # Get LoadBalancer external IPs for frontend and agent-system
-              echo "Waiting for LoadBalancer services to get external IPs..."
-              kubectl get svc -n ${NAMESPACE} -l app.kubernetes.io/component=frontend
-              kubectl get svc -n ${NAMESPACE} -l app.kubernetes.io/component=agent-system
-              
-              echo "Helm deployment completed successfully!"
-            '''
+              sh "gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}"
+              sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE} --project ${GCP_PROJECT_ID}"
+
+
+              sh '''
+                echo "Starting Helm deployment..."
+                
+                # Create namespace if it doesn't exist
+                kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                
+                # Deploy/Upgrade Helm chart with secrets
+                helm upgrade --install naver-hkt ./k8s \
+                  --namespace ${NAMESPACE} \
+                  --set secrets.googleClientId="${GOOGLE_CLIENT_ID}" \
+                  --set secrets.googleClientSecret="${GOOGLE_CLIENT_SECRET}" \
+                  --set secrets.secretKey="${SECRET_KEY}" \
+                  --set secrets.dbPassword="${DB_PASSWORD}" \
+                  --set secrets.minioPassword="${MINIO_PASSWORD}" \
+                  --set secrets.langfusePublicKey="${LANGFUSE_PUBLIC_KEY}" \
+                  --set secrets.langfuseSecretKey="${LANGFUSE_SECRET_KEY}" \
+                  --set secrets.langfuseHost="${LANGFUSE_HOST}" \
+                  --set secrets.clovastudioApiKey="${CLOVASTUDIO_API_KEY}" \
+                  --set secrets.clovaOcrSecret="${CLOVA_OCR_SECRET}" \
+                  --wait \
+                  --timeout 10m
+                
+                # Get LoadBalancer external IPs for frontend and agent-system
+                echo "Waiting for LoadBalancer services to get external IPs..."
+                kubectl get svc -n ${NAMESPACE} -l app.kubernetes.io/component=frontend
+                kubectl get svc -n ${NAMESPACE} -l app.kubernetes.io/component=agent-system
+                
+                echo "Helm deployment completed successfully!"
+              '''
             }
           }
         }
