@@ -1,0 +1,16 @@
+[project]
+name = "mlflow-model-registry"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "bentoml>=1.4.19",
+    "mlflow>=3.1.4",
+    "xgboost>=3.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.30.0",
+]

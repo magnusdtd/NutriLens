@@ -1,0 +1,81 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "naver-hkt.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "naver-hkt.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "naver-hkt.labels" -}}
+helm.sh/chart: {{ include "naver-hkt.chart" . }}
+{{ include "naver-hkt.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "naver-hkt.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "naver-hkt.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "naver-hkt.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "naver-hkt.name" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get the image name for a component
+*/}}
+{{- define "naver-hkt.image" -}}
+{{- $repository := .repository }}
+{{- $tag := .tag | default .Values.global.imageTag | default "latest" }}
+{{- printf "%s:%s" $repository $tag }}
+{{- end }}
+
+{{/*
+Get the database URL
+*/}}
+{{- define "naver-hkt.databaseUrl" -}}
+{{- printf "postgresql://%s:%s@%s:%s/%s" .Values.secrets.dbUser .Values.secrets.dbPassword (printf "%s-database" (include "naver-hkt.name" .)) (.Values.database.service.port | toString) .Values.database.auth.database }}
+{{- end }}
+
+{{/*
+Get the Redis URL
+*/}}
+{{- define "naver-hkt.redisUrl" -}}
+{{- printf "redis://%s:%s/0" (printf "%s-redis" (include "naver-hkt.name" .)) (.Values.redis.service.port | toString) }}
+{{- end }}
+
+{{/*
+Get the MinIO URL
+*/}}
+{{- define "naver-hkt.minioUrl" -}}
+{{- printf "http://%s:%s" (printf "%s-minio" (include "naver-hkt.name" .)) (.Values.minio.service.apiPort | toString) }}
+{{- end }} 
+
+{{/*
+Get the Redis Session URL
+*/}}
+{{- define "naver-hkt.redisSessionUrl" -}}
+{{- printf "redis://%s-redis-session:%s/0" (include "naver-hkt.name" .) (.Values.redisSession.service.port | toString) }}
+{{- end }}

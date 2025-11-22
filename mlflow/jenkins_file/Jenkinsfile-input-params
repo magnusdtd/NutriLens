@@ -1,0 +1,91 @@
+pipeline {
+  agent any    // use master, which has Docker installed
+
+  // ==== Parameters you can tweak at trigger time ====
+  parameters {
+    string(name: 'MODEL_NAME', defaultValue: 'iris_xgboost_model', description: 'MLflow model name in the registry')
+  }
+
+  environment {
+    // Point Jenkins at your MLflow backend
+    MLFLOW_TRACKING_URI = 'http://mlflow_server:5000'
+    // Credentials ID in Jenkins for Docker push
+    REGISTRY_CREDENTIAL = 'docker-cred'
+    DOCKER_NAME = 'xuannguyenhehe'
+    REGISTRY = "${DOCKER_NAME}/${params.MODEL_NAME}"
+  }
+
+  stages {
+    stage('Install uv') {
+      steps {
+        // Install uv (just to demo, not recommend to install at here)
+        sh '''
+          echo $PATH
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          . "$HOME/.local/bin/env"
+          uv version
+        '''
+      }
+    }
+
+    stage('Sync deps') {
+      steps {
+        withEnv(["PATH=${HOME}/.local/bin:${env.PATH}"]) {
+          sh 'uv sync --all-groups'
+        }
+      }
+    }
+
+    stage('Containerize model') {
+      steps {
+        withEnv(["PATH=${HOME}/.local/bin:${env.PATH}"]) {
+          script {
+            sh '''
+              MODEL_URI="models:/${MODEL_NAME}@champion"
+              uv run mlflow models build-docker -m $MODEL_URI -n ${MODEL_NAME} --enable-mlserver
+              docker tag ${MODEL_NAME}:latest ${REGISTRY}:latest
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Push to Docker REGISTRY') {
+      steps {
+        script {
+          echo "This is build #${BUILD_NUMBER}"
+          echo 'Pushing image to DockerHub…'
+          // 1) load the image you just built
+          def dockerImage = docker.image("${env.REGISTRY}:latest")
+          // 2) publish using the credentials
+          docker.withRegistry('', env.REGISTRY_CREDENTIAL) {
+            dockerImage.push()
+          }
+        }
+      }
+    }
+    // The following stage is for educational purposes only. In this case, the model is running inside Jenkins (not recommended for production).
+    // In production, consider deploying models using a more robust method such as Kserve
+    // Reference: https://mlflow.org/docs/latest/ml/deployment/deploy-model-to-kubernetes/tutorial/#write-deployment-configuration
+    stage('Deploy model') {
+      steps {
+        // Deploy the model container
+        script {
+          sh '''
+            docker rm -f ${MODEL_NAME} || true
+            docker run -d --name ${MODEL_NAME} -p 30000:8080 ${MODEL_NAME}:latest
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "🎉 Built successfully"
+    }
+    failure {
+      echo "❌ Build or push failed. Check console output."
+    }
+  }
+}

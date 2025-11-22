@@ -8,3 +8,15 @@ wheels/
 
 # Virtual environments
 .venv
+data/
+.env
+note/
+models/
+testing.py
+chroma_db/
+checkpoints*/
+mlruns/
+secrets/
+.terraform
+.terraform.*
+terraform.*
