@@ -1,5 +1,5 @@
 
-density_map = {
+density_map = { # cm^3/g
     'background': 0.0,
     'candy': 1.5,  # g/cm^3, typical high density for candy
     'egg tart': 0.6,  # based on pastry and egg content

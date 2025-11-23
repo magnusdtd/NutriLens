@@ -2,40 +2,12 @@ import os
 from typing import Optional
 from uuid import UUID
 
-from sqlmodel import SQLModel, Field, create_engine, Session, select
+from sqlmodel import Session, select
 from langchain.tools import tool
+from utils.postgresql import User, engine
 
 
-# ---------- 1. SQLModel definition ----------
-
-class User(SQLModel, table=True):
-    __tablename__ = "user"
-
-    id: UUID = Field(primary_key=True)
-    name: str
-    age: Optional[int] = None
-    gender: Optional[str] = None
-    height: Optional[float] = None
-    weight: Optional[float] = None
-    goals: Optional[str] = None
-    favourite_foods: Optional[str] = None
-    feedback_summary: Optional[str] = None
-
-
-# ---------- 2. Database Engine ----------
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
-
-engine = create_engine(DATABASE_URL)
-
-# Create tables if not exist
-SQLModel.metadata.create_all(engine)
-
-
-# ---------- 3. LangChain Tool ----------
+#  LangChain Tool 
 
 @tool(
     description=(
