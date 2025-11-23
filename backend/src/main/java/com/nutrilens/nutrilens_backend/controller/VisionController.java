@@ -18,7 +18,7 @@ public class VisionController {
     private final VisionService visionService;
 
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> analyzeImage(@RequestParam("image") MultipartFile imageFile) {
+    public ResponseEntity<?> analyzeImage(@RequestPart("image") MultipartFile imageFile) {
         if (imageFile.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Image file is empty."));
         }
