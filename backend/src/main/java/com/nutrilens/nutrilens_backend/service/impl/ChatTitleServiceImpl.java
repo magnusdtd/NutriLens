@@ -32,9 +32,17 @@ public class ChatTitleServiceImpl implements ChatTitleService {
     public void generateTitleAsync(Conversation conversation, String userMessage) {
         try {
             String titlePrompt = String.format("""
-                    You are a helpful assistant that names chat sessions...
-                    Message: "%s"
+                    You are a system that generates **short, simple chat titles**.
+                    - Only output a concise title (maximum 3–6 words).
+                    - Do NOT explain.
+                    - Do NOT translate.
+                    - Do NOT include punctuation like ".", "\"", or "-".
+                    - Do NOT include greeting phrases.
+                    - Just return the title only.
+                    - Please answer in English.
+                    User message: "%s"
                     """, userMessage);
+
 
             AiChatRequest titleRequest = AiChatRequest.builder()
                     .userId(conversation.getUser().getId().toString())

@@ -12,19 +12,31 @@ import java.util.List;
 @NoArgsConstructor
 public class VisionAnalyzeResponseDTO {
 
-    private List<String> predictions;
-
-    @JsonProperty("nutritional_info")
-    private NutritionalInfo nutritionalInfo;
+    @JsonProperty("volume_predictions")
+    private List<VolumePrediction> volumePredictions;
 
     @Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class NutritionalInfo {
-        private Integer calories;
-        private Double protein;
-        private Double carbs;
-        private Double fat;
+    public static class VolumePrediction {
+
+        @JsonProperty("object_name")
+        private String objectName;
+
+        @JsonProperty("volume_m3")
+        private Double volumeM3;
+
+        @JsonProperty("weight_g")
+        private Double weightG;
+
+        @JsonProperty("density_g_per_cm3")
+        private Double densityGPerCm3;
+
+        @JsonProperty("score")
+        private Double score;
+
+        @JsonProperty("box")
+        private List<Integer> box;
     }
 }

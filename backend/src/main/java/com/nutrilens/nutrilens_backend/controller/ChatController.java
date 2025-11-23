@@ -1,6 +1,5 @@
 package com.nutrilens.nutrilens_backend.controller;
 
-import com.nutrilens.nutrilens_backend.common.dto.chat.ChatRequestDTO;
 import com.nutrilens.nutrilens_backend.common.dto.chat.ChatResponseDTO;
 import com.nutrilens.nutrilens_backend.common.dto.chat.ConversationDetailDTO;
 import com.nutrilens.nutrilens_backend.common.dto.chat.ConversationPreviewDTO;
