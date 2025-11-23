@@ -6,6 +6,7 @@ interface ChatInputBarProps {
   value: string
   onChange: (value: string) => void
   onSend: () => void
+  disabled?: boolean
   imagePreview?: string | null
   onImageSelect: (file: File) => void
   onRemoveImage: () => void
@@ -15,6 +16,7 @@ export default function ChatInputBar({
   value,
   onChange,
   onSend,
+  disabled = false,
   imagePreview,
   onImageSelect,
   onRemoveImage,
@@ -22,7 +24,7 @@ export default function ChatInputBar({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !disabled) {
       event.preventDefault()
       onSend()
     }
@@ -60,12 +62,14 @@ export default function ChatInputBar({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={disabled}
             placeholder="Ask about your meal..."
             className="flex-1 border-none bg-transparent text-sm lg:text-base text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
           />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
             className="flex size-9 items-center justify-center rounded-full bg-secondary text-charcoal"
           >
             <img className="size-6" src={image} alt="" />
@@ -74,6 +78,7 @@ export default function ChatInputBar({
           <button
             type="button"
             onClick={onSend}
+            disabled={disabled}
             className="flex size-9 items-center justify-center rounded-full bg-primary text-white"
           >
             <Send className="size-4" />

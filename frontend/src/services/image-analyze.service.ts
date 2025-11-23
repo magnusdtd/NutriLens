@@ -22,7 +22,7 @@ export default async function imageAnalyze({ image, token }: ImageRequest) {
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/v1/vision/analyze`,
       formData,
-      headers
+      { headers }
     )
 
     return response.data

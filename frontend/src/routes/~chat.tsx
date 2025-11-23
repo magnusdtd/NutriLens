@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import type { IconName } from 'lucide-react/dynamic'
 import { DynamicIcon } from 'lucide-react/dynamic'
@@ -17,6 +17,14 @@ type Message = {
   text: string
   emphasized?: boolean
   imageUrl?: string | null
+}
+
+const formatMessage = (text: string) => {
+  const html = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/\n/g, '<br />')
+  return `<p>${html}</p>`
 }
 
 interface starterSuggestion {
@@ -50,75 +58,68 @@ function ChatPage() {
   const [input, setInput] = useState('')
   const [attachedImage, setAttachedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isSending, setIsSending] = useState(false)
 
   const hasStarted = messages.length > 0
 
-  useEffect(() => {
-    return () => {
-      if (imagePreview) URL.revokeObjectURL(imagePreview)
-    }
-  }, [imagePreview])
-
   const handleSend = async (value?: string) => {
+    if (isSending) return
     const content = (value ?? input).trim()
     if (!content && !attachedImage) return
 
+    setIsSending(true)
     setInput('')
     const previewForMessage = imagePreview
-
-    const chatResponse = await chat({
-      userId: user?.id,
-      message: content || undefined,
-      token: token,
-      image: attachedImage ?? undefined,
-    })
-
-    const responseMsg = chatResponse
-      ? chatResponse
-      : 'An error occur, please try again'
-
     setAttachedImage(null)
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview)
-      setImagePreview(null)
-    }
+    setImagePreview(null)
 
+    let pendingResponseId = 0
     setMessages((prev) => {
-      if (prev.length === 0) {
-        const userMessage: Message = {
-          id: 1,
-          sender: 'user',
-          text: content,
-          imageUrl: previewForMessage,
-        }
-        const response: Message = {
-          id: 2,
-          sender: 'bot',
-          emphasized: true,
-          text: responseMsg,
-        }
-
-        return [userMessage, response]
-      }
-
       const nextId = prev[prev.length - 1]?.id + 1 || 1
-      const response: Message = {
+      const userMessage: Message = {
+        id: nextId,
+        sender: 'user',
+        text: content,
+        imageUrl: previewForMessage,
+      }
+      const placeholder: Message = {
         id: nextId + 1,
         sender: 'bot',
         emphasized: true,
-        text: responseMsg,
+        text: 'NutriLens is thinking...',
       }
-      return [
-        ...prev,
-        {
-          id: nextId,
-          sender: 'user',
-          text: content,
-          imageUrl: previewForMessage,
-        },
-        response,
-      ]
+      pendingResponseId = placeholder.id
+      return [...prev, userMessage, placeholder]
     })
+
+    try {
+      const chatResponse = await chat({
+        userId: user?.id,
+        message: content,
+        token: token,
+        image: attachedImage || undefined,
+      })
+
+      const responseMsg = chatResponse
+        ? chatResponse
+        : 'An error occur, please try again'
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === pendingResponseId ? { ...msg, text: responseMsg } : msg
+        )
+      )
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === pendingResponseId
+            ? { ...msg, text: 'An error occur, please try again' }
+            : msg
+        )
+      )
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleSuggestionClick = (label: string) => {
@@ -139,14 +140,13 @@ function ChatPage() {
         value={input}
         onChange={setInput}
         onSend={() => handleSend()}
+        disabled={isSending}
         imagePreview={imagePreview}
         onImageSelect={(file) => {
-          if (imagePreview) URL.revokeObjectURL(imagePreview)
           setAttachedImage(file)
           setImagePreview(URL.createObjectURL(file))
         }}
         onRemoveImage={() => {
-          if (imagePreview) URL.revokeObjectURL(imagePreview)
           setAttachedImage(null)
           setImagePreview(null)
         }}
@@ -197,29 +197,39 @@ function ActiveChatState({ messages }: { messages: Message[] }) {
     <div className="flex h-full w-full flex-col gap-4 text-sm text-charcoal">
       {messages.map((message) => {
         const isBot = message.sender === 'bot'
+        const bubbleBase =
+          'max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base space-y-2'
+        const bubbleStyle = isBot
+          ? message.emphasized
+            ? 'bg-white border border-gray-300'
+            : 'bg-transparent'
+          : 'bg-primary text-white rounded-br-sm'
+
         return (
-          <div
-            key={message.id}
-            className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
-          >
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base space-y-2 ${
-                isBot
-                  ? message.emphasized
-                    ? 'bg-white border border-gray-300'
-                    : 'bg-transparent'
-                  : 'bg-primary text-white rounded-br-sm'
-              }`}
-            >
-              {message.imageUrl && (
-                <img
-                  src={message.imageUrl}
-                  alt="Uploaded"
-                  className="max-h-48 w-auto rounded-xl object-cover"
+          <div key={message.id} className="flex w-full flex-col gap-2">
+            {message.imageUrl && (
+              <div
+                className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
+              >
+                <div className="max-w-[80%] overflow-hidden rounded-2xl border border-gray-200 bg-white p-2">
+                  <img
+                    src={message.imageUrl}
+                    alt="Uploaded"
+                    className="max-h-64 w-full rounded-xl object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            {message.text && (
+              <div
+                className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
+              >
+                <div
+                  className={`${bubbleBase} ${bubbleStyle} leading-relaxed`}
+                  dangerouslySetInnerHTML={{ __html: formatMessage(message.text) }}
                 />
-              )}
-              {message.text}
-            </div>
+              </div>
+            )}
           </div>
         )
       })}
