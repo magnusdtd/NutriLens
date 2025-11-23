@@ -25,6 +25,8 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
+RUN uv pip install -U ddgs
+
 FROM python:3.12-slim AS runtime
 
 RUN apt-get update && apt-get install --no-install-recommends -y \

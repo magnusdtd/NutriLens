@@ -4,6 +4,7 @@ import cv2
 import time
 from .yolov8 import YOLOv8Seg
 from .yolov8.density_map import density_map
+from .yolov8.utils import class_names
 from .depth_estimator import DepthEstimator
 from .point_cloud_generator import PointCloudGenerator
 import sys
@@ -11,7 +12,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 import os
 from dataclasses import dataclass
-from .yolov8.utils import class_names
 from typing import List
 from io import BytesIO
 from huggingface_hub import hf_hub_download
@@ -105,12 +105,33 @@ class VolumePredictor():
         predictions = []
         num_preds = min(len(boxes), len(volumes), len(scores), len(class_ids), len(masks))
         for i in range(num_preds):
+            # Get the class name for the predicted class_id
+            if class_ids[i] < len(class_names):
+                object_name = class_names[class_ids[i]]
+            else:
+                object_name = str(class_ids[i])
+
+            # Try to get density from density_map using the object_name 
+            density = None
+            key_variants = [object_name, object_name.lower(), object_name.strip(), object_name.lower().strip()]
+            for k in key_variants:
+                if k in density_map:
+                    density = density_map[k]
+                    break
+            if density is None:
+                density = density_map.get('other ingredients', 1.0)
+
+            vol = volumes[i]
+            weight = float(vol) * 1e6 * float(density)  # volume in m^3, density in g/cm^3; weight in grams
+
             prediction = Prediction(
-                object_name=class_names[class_ids[i]] if class_ids[i] < len(class_names) else str(class_ids[i]),
-                volume=volumes[i],
+                object_name=object_name,
+                volume=vol,
                 box=boxes[i].tolist() if hasattr(boxes[i], "tolist") else list(boxes[i]),
                 score=float(scores[i]),
-                mask=masks[i]
+                mask=masks[i],
+                weight=weight,
+                density=density
             )
             predictions.append(prediction)
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict
 
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from langgraph.graph import END, StateGraph, START
 from langgraph.types import Command
 
@@ -16,6 +16,8 @@ from tools.user_info import get_user_info_by_user_id
 from tools.volume_predictor import predict_volume_tool
 from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_naver_community.tool import NaverNewsSearch  # For news articles
+from langchain_naver_community.tool import NaverBlogSearch  # For blog posts
 
 # ---- State definition ----
 class OrchestrationState(TypedDict, total=False):

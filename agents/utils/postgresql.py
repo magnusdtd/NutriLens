@@ -3,9 +3,10 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field, create_engine
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, inspect
 import os
 
+# Use a single, global MetaData instance and pass extend_existing=True in __table_args__
 metadata = MetaData()
 
 # User table
@@ -23,7 +24,6 @@ class User(SQLModel, table=True, metadata=metadata):
     favourite_foods: Optional[str] = None
     feedback_summary: Optional[str] = None
 
-
 # Images table
 class Image(SQLModel, table=True, metadata=metadata):
     __tablename__ = "images"
@@ -36,7 +36,6 @@ class Image(SQLModel, table=True, metadata=metadata):
     file_name: str
     upload_time: datetime = Field(default_factory=datetime.utcnow)
 
-
 # Conversations table
 class Conversation(SQLModel, table=True, metadata=metadata):
     __tablename__ = "conversations"
@@ -48,7 +47,6 @@ class Conversation(SQLModel, table=True, metadata=metadata):
     chat_name: str = Field(default="New chat")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     summary: Optional[str] = None
-
 
 # Messages table
 class Message(SQLModel, table=True, metadata=metadata):
@@ -70,5 +68,13 @@ if not DATABASE_URL:
 
 engine = create_engine(DATABASE_URL)
 
-# Create tables if not exist using the custom metadata
-metadata.create_all(engine)
+inspector = inspect(engine)
+table_names = inspector.get_table_names()
+
+# Only create tables if they don't already exist
+required_tables = ["user", "images", "conversations", "messages"]
+tables_missing = any(table not in table_names for table in required_tables)
+
+if tables_missing:
+    # Add extend_existing=True to metadata.create_all to allow redefining tables if needed
+    metadata.create_all(engine, checkfirst=True)
