@@ -49,76 +49,76 @@ const AnalyzeCategories: AnalyzeCategory[] = [
   { id: 4, category: 'Finalizing result' },
 ]
 
-type NutritionItem = {
-  name: keyof Nutrition
-  value: number
-  unit: string
-  primary: boolean
-  bg: string
-  text: string
-}
+// type NutritionItem = {
+//   name: keyof Nutrition
+//   value: number
+//   unit: string
+//   primary: boolean
+//   bg: string
+//   text: string
+// }
 
-const nutritionData: NutritionItem[] = [
-  {
-    name: 'calories',
-    value: 542,
-    unit: 'kcal',
-    primary: true,
-    bg: '#FFEDD4',
-    text: '#F54A00',
-  },
-  {
-    name: 'protein',
-    value: 28,
-    unit: 'g',
-    primary: true,
-    bg: '#FFE2E2',
-    text: '#E7000B',
-  },
-  {
-    name: 'carbs',
-    value: 45,
-    unit: 'g',
-    primary: true,
-    bg: '#DBEAFE',
-    text: '#155DFC',
-  },
-  {
-    name: 'fat',
-    value: 18,
-    unit: 'g',
-    primary: true,
-    bg: '#FEF9C2',
-    text: '#D08700',
-  },
-  // {
-  //   name: 'Fiber',
-  //   value: 6,
-  //   unit: 'g',
-  //   primary: false,
-  //   bg: '#ffffff',
-  //   text: '#1F1F1F',
-  // },
-  // {
-  //   name: 'Sugar',
-  //   value: 8,
-  //   unit: 'g',
-  //   primary: false,
-  //   bg: '#ffffff',
-  //   text: '#1F1F1F',
-  // },
-]
+// const nutritionData: NutritionItem[] = [
+//   {
+//     name: 'calories',
+//     value: 542,
+//     unit: 'kcal',
+//     primary: true,
+//     bg: '#FFEDD4',
+//     text: '#F54A00',
+//   },
+//   {
+//     name: 'protein',
+//     value: 28,
+//     unit: 'g',
+//     primary: true,
+//     bg: '#FFE2E2',
+//     text: '#E7000B',
+//   },
+//   {
+//     name: 'carbs',
+//     value: 45,
+//     unit: 'g',
+//     primary: true,
+//     bg: '#DBEAFE',
+//     text: '#155DFC',
+//   },
+//   {
+//     name: 'fat',
+//     value: 18,
+//     unit: 'g',
+//     primary: true,
+//     bg: '#FEF9C2',
+//     text: '#D08700',
+//   },
+//   // {
+//   //   name: 'Fiber',
+//   //   value: 6,
+//   //   unit: 'g',
+//   //   primary: false,
+//   //   bg: '#ffffff',
+//   //   text: '#1F1F1F',
+//   // },
+//   // {
+//   //   name: 'Sugar',
+//   //   value: 8,
+//   //   unit: 'g',
+//   //   primary: false,
+//   //   bg: '#ffffff',
+//   //   text: '#1F1F1F',
+//   // },
+// ]
 
 interface ImageRequest {
   image: File | Blob
 }
 
-type Nutrition = {
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-}
+// type Nutrition = {
+//   calories: number
+//   protein: number
+//   carbs: number
+//   fat: number
+// }
 
 interface PredictItem {
   object_name: string
