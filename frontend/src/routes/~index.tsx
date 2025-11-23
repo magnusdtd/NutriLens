@@ -1,10 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import UploadImage from '@/components/upload-image'
 import { useEffect, useState } from 'react'
 import LoaderCircleRotate from '@/components/loader-circle-rotate'
 import tick from '/icons/tick.svg'
 import { BotMessageSquare, Salad } from 'lucide-react'
 import imageAnalyze from '@/services/image-analyze.service'
+import { useAuthStore } from '@/stores/auth.store'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -119,12 +120,24 @@ type Nutrition = {
   fat: number
 }
 
+interface PredictItem {
+  object_name: string
+  volume_m3: number
+  weight_g: number
+  density_g_per_cm3: number
+  score: number
+  box: number[]
+}
+
 interface AnalyzeInfo {
-  predictions: string[]
-  nutritionalInfo: Nutrition
+  // predictions: string[]
+  // nutritional_info: Nutrition
+  volume_predictions: PredictItem[]
 }
 
 function Home() {
+  const navigate = useNavigate();
+  const token = useAuthStore((state) => (state.token))
   const [image, setImage] = useState<ImageRequest | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [currentProcessId, setCurrentProcessId] = useState<number | null>(null)
@@ -138,7 +151,10 @@ function Home() {
 
     let analyzeResponse: AnalyzeInfo
     const getAnalyzeResult = async () => {
-      analyzeResponse = await imageAnalyze(image)
+      analyzeResponse = await imageAnalyze({
+        image: image.image,
+        token: token,
+      })
       if (analyzeResponse) console.log(analyzeResponse)
     }
 
@@ -182,7 +198,7 @@ function Home() {
             Analyze your Meals
           </h1>
           <p className="text-gray-600 font-light text-sm lg:text-base">
-            Take a photo your meal and get instant nutrition insights poweed by
+            Take a photo your meal and get instant food mass insights powered by
             Al
           </p>
         </div>
@@ -252,15 +268,15 @@ function Home() {
       </div>
       <div>
         <h1 className="text-xl lg:text-2xl font-bold ">Predictions</h1>
-        <p className="text-sm lg:text-base font-light text-gray-600">
+        <p className="text-sm lg:text-base font-light text-gray-600 flex flex-col gap-2">
           {result &&
-            result.predictions.map((pred, id) => (
-              <span key={id}>{pred}, </span>
+            result.volume_predictions.map((pred, id) => (
+              <span key={id}>{pred.object_name}: {pred.weight_g} g</span>
             ))}
         </p>
       </div>
       <div>
-        <div className="grid grid-cols-2 grid-row-[1fr_1fr_auto] gap-3">
+        {/* <div className="grid grid-cols-2 grid-row-[1fr_1fr_auto] gap-3">
           {nutritionData.map((data, id) => {
             if (data.primary)
               return (
@@ -276,7 +292,7 @@ function Home() {
                     className="font-bold text-xl lg:text-2xl"
                     style={{ color: `${data.text}` }}
                   >
-                    {result ? result.nutritionalInfo[data.name] : data.value}
+                    {result ? result.nutritional_info[data.name] : data.value}
                   </p>
                   <p
                     className="font-light text-sm lg:text-base"
@@ -304,9 +320,9 @@ function Home() {
               </div>
             )
           })}
-        </div>
+        </div> */}
         <div className="mt-4 flex flex-col gap-2">
-          <div className="w-full flex flex-row items-center justify-center gap-4 text-white bg-primary p-2 rounded-md">
+          <div onClick={()=> {navigate({ to: '/chat' })}} className="w-full flex flex-row items-center justify-center gap-4 text-white bg-primary p-2 rounded-md">
             <BotMessageSquare className="size-6" />
             <p className="text-sm lg:text-base font-medium">Ask AI for advices</p>
           </div>
@@ -314,7 +330,7 @@ function Home() {
             className="w-full flex flex-row items-center justify-center gap-4 text-charcoal bg-yellow-green p-2 rounded-md"
             onClick={() => {
               setResult(undefined)
-              setImage(null)
+              setImage(null)                           
             }}
           >
             <Salad className="size-6" />

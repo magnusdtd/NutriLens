@@ -6,9 +6,9 @@ import { useAuthStore } from '@/stores/auth.store'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
-  const isAuthenticated = useAuthStore((state) => (state.isAuthenticated))
-  const user = useAuthStore((state) => (state.user))
-  const logout = useAuthStore((state)=>(state.logout))
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
   const navigate = useNavigate({ from: '/' })
 
   function handleLogout() {
@@ -19,7 +19,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed w-full py-4 px-6 flex items-center justify-between bg-white/70 backdrop-blur-md text-charcoal shadow-lg">
+      <header className="fixed z-10 w-full py-4 px-6 flex items-center justify-between bg-white/70 backdrop-blur-xs text-charcoal shadow-lg">
         <div className="flex flex-row gap-6">
           <img src={logo} alt="" />
           <h1 className="text-xl lg:text-2xl font-bold">NutriLens</h1>
@@ -72,7 +72,7 @@ export default function Header() {
           {/* Demo Links End */}
           <div className="my-4 h-px w-full bg-gray-200" />
           {isAuthenticated ? (
-            <div className='flex flex-col gap-2'>
+            <div className="flex flex-col gap-2">
               <Link
                 to="/profile"
                 onClick={() => setIsOpen(false)}
@@ -83,7 +83,10 @@ export default function Header() {
                   {user?.username}'s Profile
                 </span>
               </Link>
-              <button onClick={handleLogout} className="w-full bg-red-600 hover:bg-red-700 transition-colors text-white text-sm font-medium rounded-lg py-3 shadow-md">
+              <button
+                onClick={handleLogout}
+                className="w-full bg-red-600 hover:bg-red-700 transition-colors text-white text-sm font-medium rounded-lg py-3 shadow-md"
+              >
                 Log out
               </button>
             </div>

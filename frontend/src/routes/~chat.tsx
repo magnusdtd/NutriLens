@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { MessageCircle, Send } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import type { IconName } from 'lucide-react/dynamic'
 import { DynamicIcon } from 'lucide-react/dynamic'
-import image from '/icons/image.svg'
 import chat from '@/services/chat.service'
+import ChatInputBar from '@/components/chat-input-bar'
+import { useAuthStore } from '@/stores/auth.store'
 
 export const Route = createFileRoute('/chat')({
   component: ChatPage,
@@ -15,6 +16,15 @@ type Message = {
   sender: 'user' | 'bot'
   text: string
   emphasized?: boolean
+  imageUrl?: string | null
+}
+
+const formatMessage = (text: string) => {
+  const html = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/\n/g, '<br />')
+  return `<p>${html}</p>`
 }
 
 interface starterSuggestion {
@@ -42,59 +52,74 @@ const starterSuggestions: starterSuggestion[] = [
 ]
 
 function ChatPage() {
+  const user = useAuthStore((state) => state.user)
+  const token = useAuthStore((state) => state.token)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
+  const [attachedImage, setAttachedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isSending, setIsSending] = useState(false)
 
   const hasStarted = messages.length > 0
 
   const handleSend = async (value?: string) => {
+    if (isSending) return
     const content = (value ?? input).trim()
-    if (!content) return
+    if (!content && !attachedImage) return
 
+    setIsSending(true)
     setInput('')
+    const previewForMessage = imagePreview
+    setAttachedImage(null)
+    setImagePreview(null)
 
-    const chatResponse = await chat({
-      message: content,
-    })
-
-    const responseMsg = chatResponse
-      ? chatResponse
-      : 'An error occur, please try again'
-
+    let pendingResponseId = 0
     setMessages((prev) => {
-      if (prev.length === 0) {
-        const userMessage: Message = {
-          id: 1,
-          sender: 'user',
-          text: content,
-        }
-        const response: Message = {
-          id: 2,
-          sender: 'bot',
-          emphasized: true,
-          text: responseMsg,
-        }
-
-        return [userMessage, response]
-      }
-
       const nextId = prev[prev.length - 1]?.id + 1 || 1
-      const response: Message = {
+      const userMessage: Message = {
+        id: nextId,
+        sender: 'user',
+        text: content,
+        imageUrl: previewForMessage,
+      }
+      const placeholder: Message = {
         id: nextId + 1,
         sender: 'bot',
         emphasized: true,
-        text: responseMsg,
+        text: 'NutriLens is thinking...',
       }
-      return [
-        ...prev,
-        {
-          id: nextId,
-          sender: 'user',
-          text: content,
-        },
-        response,
-      ]
+      pendingResponseId = placeholder.id
+      return [...prev, userMessage, placeholder]
     })
+
+    try {
+      const chatResponse = await chat({
+        userId: user?.id,
+        message: content,
+        token: token,
+        image: attachedImage || undefined,
+      })
+
+      const responseMsg = chatResponse
+        ? chatResponse
+        : 'An error occur, please try again'
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === pendingResponseId ? { ...msg, text: responseMsg } : msg
+        )
+      )
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === pendingResponseId
+            ? { ...msg, text: 'An error occur, please try again' }
+            : msg
+        )
+      )
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleSuggestionClick = (label: string) => {
@@ -115,6 +140,16 @@ function ChatPage() {
         value={input}
         onChange={setInput}
         onSend={() => handleSend()}
+        disabled={isSending}
+        imagePreview={imagePreview}
+        onImageSelect={(file) => {
+          setAttachedImage(file)
+          setImagePreview(URL.createObjectURL(file))
+        }}
+        onRemoveImage={() => {
+          setAttachedImage(null)
+          setImagePreview(null)
+        }}
       />
     </div>
   )
@@ -162,71 +197,42 @@ function ActiveChatState({ messages }: { messages: Message[] }) {
     <div className="flex h-full w-full flex-col gap-4 text-sm text-charcoal">
       {messages.map((message) => {
         const isBot = message.sender === 'bot'
+        const bubbleBase =
+          'max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base space-y-2'
+        const bubbleStyle = isBot
+          ? message.emphasized
+            ? 'bg-white border border-gray-300'
+            : 'bg-transparent'
+          : 'bg-primary text-white rounded-br-sm'
+
         return (
-          <div
-            key={message.id}
-            className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
-          >
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm lg:text-base ${
-                isBot
-                  ? message.emphasized
-                    ? 'bg-white border border-gray-300'
-                    : 'bg-transparent'
-                  : 'bg-primary text-white rounded-br-sm'
-              }`}
-            >
-              {message.text}
-            </div>
+          <div key={message.id} className="flex w-full flex-col gap-2">
+            {message.imageUrl && (
+              <div
+                className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
+              >
+                <div className="max-w-[80%] overflow-hidden rounded-2xl border border-gray-200 bg-white p-2">
+                  <img
+                    src={message.imageUrl}
+                    alt="Uploaded"
+                    className="max-h-64 w-full rounded-xl object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            {message.text && (
+              <div
+                className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'}`}
+              >
+                <div
+                  className={`${bubbleBase} ${bubbleStyle} leading-relaxed`}
+                  dangerouslySetInnerHTML={{ __html: formatMessage(message.text) }}
+                />
+              </div>
+            )}
           </div>
         )
       })}
-    </div>
-  )
-}
-
-function ChatInputBar({
-  value,
-  onChange,
-  onSend,
-}: {
-  value: string
-  onChange: (value: string) => void
-  onSend: () => void
-}) {
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      onSend()
-    }
-  }
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[#FBFDF5] px-4 pb-6 pt-3">
-      <div className="mx-auto flex max-w-xl items-center gap-3 rounded-full bg-white px-4 lg:px-6 py-2 lg:py-4 shadow-md border border-gray-200">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask about your meal..."
-          className="flex-1 border-none bg-transparent text-sm lg:text-base text-charcoal placeholder:text-gray-400 focus:outline-none focus:ring-0"
-        />
-        <button
-          type="button"
-          className="flex size-9 items-center justify-center rounded-full bg-secondary text-charcoal"
-        >
-          <img className="size-6" src={image} alt="" />
-          <span className="sr-only">Attach image</span>
-        </button>
-        <button
-          type="button"
-          onClick={onSend}
-          className="flex size-9 items-center justify-center rounded-full bg-primary text-white"
-        >
-          <Send className="size-4" />
-          <span className="sr-only">Send message</span>
-        </button>
-      </div>
     </div>
   )
 }

@@ -57,13 +57,13 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       MLFLOW_URI: ${MLFLOW_URI}
 
-  frontend:
-    build:
-      context: ./frontend/
-      dockerfile: ./Dockerfile
-    image: magnusdtd/naver-hkt-frontend
-    ports:
-      - "8070:8070"
+  # frontend:
+  #   build:
+  #     context: ./frontend/
+  #     dockerfile: ./Dockerfile
+  #   image: magnusdtd/naver-hkt-frontend
+  #   ports:
+  #     - "8070:8070"
 
   backend:
     build:
